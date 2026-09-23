@@ -14,13 +14,13 @@ import { formatCount, relativeTime } from "../lib/format";
 import { ShellActions, useRailCount } from "./AppShell";
 import { focusedAttr, moveFocus, useHotkeys } from "../hooks/useHotkeys";
 
-const TH = "h-10 whitespace-nowrap bg-subtle px-3 text-left label-caps text-fg-2 border-b-2 border-fg first:pl-4";
+const TH = "h-10 whitespace-nowrap bg-subtle px-3 text-left label-caps text-fg-2 edge-b first:pl-4";
 // Row dividers are the one hairline allowed: they sit inside a bordered block.
-const TD = "h-13 whitespace-nowrap px-3 align-middle border-b border-border-soft group-last:border-b-0 first:pl-4";
+const TD = "h-[var(--row-h)] whitespace-nowrap px-3 align-middle edge-soft-b group-last:border-b-0 first:pl-4";
 // The row is the click target; the title is the real control, so its name is the accessible name.
-// Hover fills the cells acid with no transition; keyboard focus draws a blue bar on the first cell.
+// Hover fills the cells (acid in brutalism) with no transition; keyboard focus draws a blue bar on the first cell.
 const ROW =
-  "group cursor-pointer hover:[&>td]:bg-acid has-[:focus-visible]:[&>td]:bg-acid has-[:focus-visible]:[&>td:first-child]:shadow-[inset_5px_0_0_var(--color-primary)]";
+  "group cursor-pointer hover:[&>td]:bg-row-hover has-[:focus-visible]:[&>td]:bg-row-hover has-[:focus-visible]:[&>td:first-child]:shadow-[inset_5px_0_0_var(--color-primary)]";
 const ROW_TITLE = "min-w-0 max-w-full truncate text-left font-medium outline-none";
 
 type PrStatus = "draft" | "approved" | "changes_requested" | "review_required";
@@ -199,7 +199,7 @@ export default function PRList({
       </div>
 
       {error && (
-        <div role="alert" className="flex items-center gap-3 border-2 border-fg bg-danger-soft px-3.5 py-2.5 text-fg shadow-hard">
+        <div role="alert" className="flex items-center gap-3 edge bg-danger-soft px-3.5 py-2.5 text-fg lift">
           <Icon name="alert" className="size-4 text-danger-ink" />
           <span className="font-medium">Could not load pull requests</span>
           <span className="font-mono text-xs text-danger-ink">{error}</span>
@@ -284,10 +284,10 @@ export default function PRList({
                   <td className={`${TD} text-xs`}>
                     {pr.reviewStatus === "reported" ? (
                       <span className="inline-flex items-center gap-1.5 font-mono text-fg-2">
-                        <span className="size-2 border border-fg bg-sev-medium-dot" />
+                        <span className="size-2 edge-hair bg-sev-medium-dot" />
                         {pr.openFindings} open
                         <span className="text-fg-3">·</span>
-                        <span className="size-2 border border-fg bg-st-reported-dot" />
+                        <span className="size-2 edge-hair bg-st-reported-dot" />
                         {pr.postedFindings} posted
                       </span>
                     ) : (
@@ -341,7 +341,7 @@ function SortableTh({
 }) {
   return (
     <th className={TH} style={{ width }} aria-sort={active ? (dir === "asc" ? "ascending" : "descending") : "none"}>
-      <button type="button" onClick={onClick} className="inline-flex items-center gap-1 label-caps hover:bg-acid hover:text-fg focus-ring">
+      <button type="button" onClick={onClick} className="inline-flex items-center gap-1 label-caps hover:bg-acid hover:text-acid-fg focus-ring">
         {label}
         <Icon name={dir === "asc" ? "chevronUp" : "chevronDown"} className={`size-3 ${active ? "" : "invisible"}`} />
       </button>
@@ -352,7 +352,7 @@ function SortableTh({
 function EmptyState({ repo, filtered, onRefresh }: { repo: string; filtered: boolean; onRefresh: () => void }) {
   return (
     <div className="flex min-h-[360px] flex-col items-center justify-center gap-3 p-10 text-center [background:repeating-linear-gradient(0deg,transparent_0_43px,var(--color-subtle)_43px_44px),var(--color-surface)]">
-      <div className="inline-flex size-12 items-center justify-center border-2 border-fg bg-acid text-fg shadow-hard-sm">
+      <div className="inline-flex size-12 items-center justify-center edge bg-acid text-acid-fg lift-sm">
         <Icon name="inbox" className="size-5" />
       </div>
       <div className="flex flex-col gap-1.5">

@@ -245,7 +245,7 @@ export default function PRDetail({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 border-t-2 border-fg bg-subtle px-5 py-3">
+        <div className="flex items-center gap-2 edge-t bg-subtle px-5 py-3">
           <Select id="model" icon="cpu" label="Model" wrapperClassName="w-[168px]" value={model} onChange={(e) => setModel(e.target.value)} disabled={isRunning}>
             <option value="sonnet">Sonnet</option>
             <option value="opus">Opus</option>
@@ -298,14 +298,14 @@ export default function PRDetail({
         </div>
 
         {review?.status === "failed" && review.error && (
-          <div role="alert" className="flex flex-col border-t-2 border-fg bg-danger-soft">
+          <div role="alert" className="flex flex-col edge-t bg-danger-soft">
             <Band tone="problem">
               <Icon name="alert" className="size-3.5" />
               Review failed
             </Band>
             <div className="flex items-start gap-3.5 px-5 pb-4 pt-3.5">
               <div className="flex flex-1 flex-col gap-1.5">
-                <pre className="max-w-[900px] whitespace-pre-wrap border-2 border-fg bg-surface px-2.5 py-2 font-mono text-xs leading-[18px] text-danger-ink">{review.error}</pre>
+                <pre className="max-w-[900px] whitespace-pre-wrap edge bg-surface px-2.5 py-2 font-mono text-xs leading-[18px] text-danger-ink">{review.error}</pre>
               </div>
               <div className="flex gap-2">
                 <Button size="sm" onClick={() => navigator.clipboard?.writeText(review.error ?? "")}>
@@ -327,7 +327,7 @@ export default function PRDetail({
         )}
 
         {review?.summary && review.status === "reported" && (
-          <div className="flex flex-col border-t-2 border-fg">
+          <div className="flex flex-col edge-t">
             <Band tone="summary">
               <Icon name="checkCircle" className="size-3.5" />
               Review summary
@@ -338,8 +338,8 @@ export default function PRDetail({
       </Card>
 
       {showThread && (
-        <section id="review-thread" className="overflow-hidden border-2 border-fg bg-term-bg shadow-hard font-mono text-xs leading-5 text-term-fg">
-          <div className="flex h-[38px] items-center gap-2.5 border-b border-term-border pl-3.5 pr-3 font-sans text-xs text-term-head">
+        <section id="review-thread" className="overflow-hidden edge bg-term-bg lift font-mono text-xs leading-5 text-term-fg">
+          <div className="flex h-[38px] items-center gap-2.5 edge-term-b pl-3.5 pr-3 font-sans text-xs text-term-head">
             <span className="inline-flex items-center gap-1.5">
               <Icon name="terminal" className="size-3.5" />
               Review thread
@@ -356,11 +356,11 @@ export default function PRDetail({
                 <span className="text-term-fg">■</span> assistant
               </span>
             </span>
-            <Button variant="quiet" size="sm" className="ml-auto text-term-head hover:bg-white/10 hover:text-white" onClick={() => refetchThread()}>
+            <Button variant="quiet" size="sm" className="ml-auto text-term-head hover:bg-term-border hover:text-term-fg" onClick={() => refetchThread()}>
               <Icon name="refresh" />
               Refresh
             </Button>
-            <Button variant="quiet" size="sm" iconOnly aria-label="Collapse thread" className="text-term-head hover:bg-white/10 hover:text-white" onClick={() => setShowThread(false)}>
+            <Button variant="quiet" size="sm" iconOnly aria-label="Collapse thread" className="text-term-head hover:bg-term-border hover:text-term-fg" onClick={() => setShowThread(false)}>
               <Icon name="chevronUp" />
             </Button>
           </div>
@@ -383,7 +383,7 @@ export default function PRDetail({
 
       {review && (
         <Card className="overflow-hidden">
-          <div className="flex h-12 items-center gap-3 border-b-2 border-fg pl-5 pr-4">
+          <div className="flex h-12 items-center gap-3 edge-b pl-5 pr-4">
             <span className="font-display text-[20px] uppercase leading-none">Findings</span>
             <span className="font-mono text-xs text-fg-3">{sortedFindings.length}</span>
             {sortedFindings.length > 0 && (
@@ -409,7 +409,7 @@ export default function PRDetail({
                 <div
                   key={finding.id}
                   data-finding-id={finding.id}
-                  className={`group flex h-13 items-center gap-3 border-b border-border-soft pl-5 pr-4 last:border-b-0 hover:bg-acid has-[:focus-visible]:bg-acid has-[:focus-visible]:shadow-[inset_5px_0_0_var(--color-primary)] ${
+                  className={`group flex h-13 items-center gap-3 edge-soft-b pl-5 pr-4 last:border-b-0 hover:bg-row-hover has-[:focus-visible]:bg-row-hover has-[:focus-visible]:shadow-[inset_5px_0_0_var(--color-primary)] ${
                     isSelected ? "bg-primary-soft" : ""
                   }`}
                 >

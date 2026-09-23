@@ -8,23 +8,23 @@ const BASE =
 
 // A block that cannot be pressed has nothing to press into: disabled drops the shadow, never goes translucent.
 const BLOCK =
-  "border-2 border-fg shadow-hard-sm press disabled:bg-subtle disabled:border-fg-3 disabled:text-fg-3 disabled:shadow-none";
+  "edge lift-sm press disabled:bg-subtle disabled:border-fg-3 disabled:text-fg-3 disabled:shadow-none";
 
 const VARIANTS: Record<Variant, string> = {
-  primary: `${BLOCK} bg-primary text-white hover:bg-primary-hover`,
-  acid: `${BLOCK} bg-acid text-fg`,
+  primary: `${BLOCK} bg-primary text-primary-fg hover:bg-primary-hover`,
+  acid: `${BLOCK} bg-acid text-acid-fg`,
   plain: `${BLOCK} bg-surface text-fg`,
-  danger: `${BLOCK} bg-danger text-fg`,
-  quiet: "border-2 border-transparent bg-transparent text-fg-2 transition-colors duration-[80ms] hover:bg-subtle hover:text-fg disabled:text-fg-3",
+  danger: `${BLOCK} bg-danger text-danger-fg`,
+  quiet: "edge border-transparent bg-transparent text-fg-2 transition-colors duration-[80ms] hover:bg-subtle hover:text-fg disabled:text-fg-3",
 };
 
 const SIZES: Record<Size, string> = {
-  md: "h-[38px] px-3.5 text-[12px] [&_svg]:size-[15px]",
+  md: "h-[var(--ctl-h)] px-3.5 text-[12px] [&_svg]:size-[15px]",
   sm: "h-8 px-2.5 text-[11px] [&_svg]:size-3.5",
 };
 
 export function buttonClass(variant: Variant = "plain", size: Size = "md", iconOnly = false, extra = "") {
-  return [BASE, VARIANTS[variant], SIZES[size], iconOnly ? (size === "sm" ? "w-8 px-0" : "w-[38px] px-0") : "", extra]
+  return [BASE, VARIANTS[variant], SIZES[size], iconOnly ? (size === "sm" ? "w-8 px-0" : "w-[var(--ctl-h)] px-0") : "", extra]
     .filter(Boolean)
     .join(" ");
 }

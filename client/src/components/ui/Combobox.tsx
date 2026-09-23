@@ -128,7 +128,7 @@ export default function Combobox({
         <div
           ref={listRef}
           role="listbox"
-          className="absolute left-0 top-[calc(100%+6px)] z-10 max-h-64 w-full overflow-y-auto border-2 border-fg bg-surface shadow-hard"
+          className="absolute left-0 top-[calc(100%+6px)] z-10 max-h-64 w-full overflow-y-auto edge bg-surface lift"
         >
           {filtered.length === 0 ? (
             <div className="px-2.5 py-2 text-xs text-fg-3">No matching branches</div>
@@ -145,11 +145,11 @@ export default function Combobox({
                   aria-selected={isSelected}
                   onClick={() => select(o.value)}
                   onMouseEnter={() => setActiveIndex(i)}
-                  className={`flex h-9 w-full items-center gap-2 border-b border-border-soft px-2.5 text-left text-[13px] outline-none last:border-b-0 ${
-                    isActive ? "bg-acid" : ""
+                  className={`flex h-9 w-full items-center gap-2 edge-soft-b px-2.5 text-left text-[13px] outline-none last:border-b-0 ${
+                    isActive ? "bg-acid text-acid-fg" : ""
                   }`}
                 >
-                  {isSelected && <Icon name="check" className="size-3 shrink-0 text-fg" />}
+                  {isSelected && <Icon name="check" className="size-3 shrink-0" />}
                   {!isSelected && <span className="size-3 shrink-0" />}
                   <span className="min-w-0 flex-1 truncate font-mono text-xs">{o.label}</span>
                   {o.hint && <Chip className="shrink-0">{o.hint}</Chip>}

@@ -35,9 +35,9 @@ export default function DiffViewer({
   const dels = lines.filter((l) => l.type === "del").length;
 
   return (
-    <div className="overflow-hidden border-2 border-fg bg-surface shadow-hard">
+    <div className="overflow-hidden edge bg-surface lift">
       {file && (
-        <div className="flex h-[38px] items-center gap-3 border-b-2 border-fg bg-subtle pl-3.5 pr-3">
+        <div className="flex h-[38px] items-center gap-3 edge-b bg-subtle pl-3.5 pr-3">
           <span className="inline-flex items-center gap-1.5 font-mono text-xs text-fg-2">
             <Icon name="file" className="size-3.5 text-fg-3" />
             {file}
@@ -47,7 +47,7 @@ export default function DiffViewer({
           </span>
           {start != null && (
             <span className="ml-auto inline-flex items-center gap-1.5 label-caps text-fg-2">
-              <span className="size-3 border-2 border-fg bg-diff-hl-bg" />
+              <span className="size-3 edge bg-diff-hl-bg" />
               finding range · {side} {start}
               {end != null && end !== start ? `–${end}` : ""}
             </span>
@@ -77,8 +77,8 @@ export default function DiffViewer({
 
               return (
                 <tr key={idx} className={s.row}>
-                  <td className={`h-[22px] w-11 min-w-11 select-none whitespace-pre border-r border-border-soft pr-2 text-right ${s.ln}`}>{line.oldLine ?? ""}</td>
-                  <td className={`h-[22px] w-11 min-w-11 select-none whitespace-pre border-r-2 border-fg pr-2 text-right ${s.ln}`}>{line.newLine ?? ""}</td>
+                  <td className={`h-[22px] w-11 min-w-11 select-none whitespace-pre edge-soft-r pr-2 text-right ${s.ln}`}>{line.oldLine ?? ""}</td>
+                  <td className={`h-[22px] w-11 min-w-11 select-none whitespace-pre edge-r pr-2 text-right ${s.ln}`}>{line.newLine ?? ""}</td>
                   <td className={`w-[22px] min-w-[22px] select-none text-center ${s.tx} ${hl ? "shadow-[inset_5px_0_0_var(--color-diff-hl-marker)]" : ""}`}>{prefix}</td>
                   <td className={`whitespace-pre pr-3 ${s.tx}`}>{line.content}</td>
                 </tr>

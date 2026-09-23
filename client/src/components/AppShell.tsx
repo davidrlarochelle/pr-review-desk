@@ -4,6 +4,8 @@ import Icon, { type IconName } from "./ui/Icon";
 import Avatar from "./ui/Avatar";
 import { useQuery } from "../hooks/useApi";
 import { JUMP_KEY_LABEL, isMac } from "./CommandPalette";
+import { Segmented } from "./ui/Field";
+import { SETTINGS_SHOW_SYSTEM_SWITCH, useSystem, type System, type Theme } from "./SystemProvider";
 
 export type Section = "prs" | "local" | "repos" | "settings";
 
@@ -50,7 +52,7 @@ export function Crumbs({ items }: { items: CrumbItem[] }) {
                   {c.label}
                 </span>
               ) : (
-                <button type="button" onClick={c.onClick} className={`truncate ${text} text-fg-3 hover:bg-acid hover:text-fg focus-ring`}>
+                <button type="button" onClick={c.onClick} className={`truncate ${text} text-fg-3 hover:bg-acid hover:text-acid-fg focus-ring`}>
                   {c.label}
                 </button>
               )}
@@ -92,7 +94,7 @@ export default function AppShell({ section, crumbs, actions, children, onNavigat
       <div className="flex h-screen overflow-hidden bg-page text-fg">
         <Rail section={section} counts={counts} onNavigate={onNavigate} onJump={onJump} />
         <div className="flex min-w-0 flex-1 flex-col">
-          <div className="flex h-[54px] shrink-0 items-center gap-4 border-b-2 border-fg bg-page px-6">
+          <div className="flex h-[54px] shrink-0 items-center gap-4 edge-b bg-page px-6">
             {crumbs}
             <div ref={setActionsEl} className="ml-auto flex shrink-0 items-center gap-2">
               {actions}
@@ -121,10 +123,10 @@ function Rail({
   const org = repos?.[0]?.split("/")[0];
 
   return (
-    <aside className="flex h-full w-[226px] shrink-0 flex-col gap-5 border-r-2 border-fg bg-rail-bg px-3 py-4">
+    <aside className="flex h-full w-[226px] shrink-0 flex-col gap-5 edge-r bg-rail-bg px-3 py-4">
       <div className="flex items-center gap-2.5 px-1">
-        <Icon name="mark" className="size-6 shrink-0 text-acid" strokeWidth={2.2} />
-        <span className="font-display text-[17px] uppercase leading-[18px] tracking-[0.02em] text-acid">
+        <Icon name="mark" className="size-6 shrink-0 text-rail-accent" strokeWidth={2.2} />
+        <span className="font-display text-[17px] uppercase leading-[18px] tracking-[0.02em] text-rail-accent">
           PR Review
           <br />
           Desk
@@ -136,11 +138,11 @@ function Rail({
         onClick={onJump}
         aria-keyshortcuts={isMac ? "Meta+K" : "Control+K"}
         title={`Jump to… (${JUMP_KEY_LABEL})`}
-        className="flex h-[38px] w-full items-center gap-2 border-2 border-rail-line px-2.5 text-left text-rail-fg hover:border-acid hover:text-acid focus-ring"
+        className="flex h-[38px] w-full items-center gap-2 edge border-rail-line px-2.5 text-left text-rail-fg hover:border-rail-accent hover:text-rail-accent focus-ring"
       >
         <Icon name="search" className="size-3.5 shrink-0" />
         <span className="flex-1 label-caps">Jump to…</span>
-        <kbd className="border-2 border-rail-line px-1 font-mono text-[10px] leading-[14px]">{JUMP_KEY_LABEL}</kbd>
+        <kbd className="edge border-rail-line px-1 font-mono text-[10px] leading-[14px]">{JUMP_KEY_LABEL}</kbd>
       </button>
 
       <nav aria-label="Sections">
@@ -156,9 +158,9 @@ function Rail({
                   aria-disabled={s.built ? undefined : "true"}
                   title={s.built ? undefined : "Not built yet"}
                   onClick={s.built ? () => onNavigate(s.id as "prs" | "local") : undefined}
-                  className={`flex h-10 w-full items-center gap-2.5 border-2 px-2.5 text-left label-caps focus-ring ${
+                  className={`flex h-10 w-full items-center gap-2.5 edge px-2.5 text-left label-caps focus-ring ${
                     active
-                      ? "border-acid bg-acid text-fg"
+                      ? "border-acid bg-acid text-acid-fg"
                       : `border-transparent text-rail-fg ${s.built ? "hover:border-rail-line hover:bg-rail-hover" : "cursor-default"}`
                   }`}
                 >
@@ -172,13 +174,14 @@ function Rail({
         </ul>
       </nav>
 
-      <div className="mt-auto flex flex-col gap-3 border-t-2 border-term-border pt-4">
+      <div className="mt-auto flex flex-col gap-3 edge-t border-rail-line pt-4">
+        {SETTINGS_SHOW_SYSTEM_SWITCH && <SystemSwitch />}
         {/* Repo switching still lives in each list's filter bar; this is the placeholder for it. */}
         <button
           type="button"
           aria-disabled="true"
           title="Repository switcher (not built yet)"
-          className="flex h-[38px] w-full cursor-default items-center gap-2 border-2 border-rail-line px-2.5 text-left text-rail-fg focus-ring"
+          className="flex h-[38px] w-full cursor-default items-center gap-2 edge border-rail-line px-2.5 text-left text-rail-fg focus-ring"
         >
           <Icon name="repo" className="size-3.5 shrink-0" />
           <span className="min-w-0 flex-1 truncate font-mono text-[12px]">{org ?? "—"}</span>
@@ -192,5 +195,26 @@ function Rail({
         )}
       </div>
     </aside>
+  );
+}
+
+const SYSTEMS: { value: System; label: string }[] = [
+  { value: "brutal", label: "Brutal" },
+  { value: "blueprint", label: "Blueprint" },
+];
+const THEMES: { value: Theme; label: string }[] = [
+  { value: "light", label: "Light" },
+  { value: "dark", label: "Dark" },
+];
+
+function SystemSwitch() {
+  const { system, theme, setSystem, setTheme } = useSystem();
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span className="px-1 label-caps text-rail-fg">System</span>
+      <Segmented block ariaLabel="Design system" value={system} onChange={setSystem} options={SYSTEMS} />
+      <span className="mt-1.5 px-1 label-caps text-rail-fg">Mode</span>
+      <Segmented block ariaLabel="Colour mode" value={theme} onChange={setTheme} options={THEMES} />
+    </div>
   );
 }

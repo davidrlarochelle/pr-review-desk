@@ -155,17 +155,17 @@ export default function LocalReviewDetail({
         </div>
 
         {review?.status === "failed" && review.error && (
-          <div role="alert" className="flex flex-col border-t-2 border-fg bg-danger-soft">
+          <div role="alert" className="flex flex-col edge-t bg-danger-soft">
             <Band tone="problem">
               <Icon name="alert" className="size-3.5" />
               Review failed
             </Band>
-            <pre className="mx-5 mb-4 mt-3.5 max-w-[900px] whitespace-pre-wrap border-2 border-fg bg-surface px-2.5 py-2 font-mono text-xs leading-[18px] text-danger-ink">{review.error}</pre>
+            <pre className="mx-5 mb-4 mt-3.5 max-w-[900px] whitespace-pre-wrap edge bg-surface px-2.5 py-2 font-mono text-xs leading-[18px] text-danger-ink">{review.error}</pre>
           </div>
         )}
 
         {review?.summary && review.status === "reported" && (
-          <div className="flex flex-col border-t-2 border-fg">
+          <div className="flex flex-col edge-t">
             <Band tone="summary">
               <Icon name="checkCircle" className="size-3.5" />
               Review summary
@@ -177,11 +177,11 @@ export default function LocalReviewDetail({
 
       {/* The fix prompt is the whole point of the local track, so it gets its own band. */}
       {openFindings.length > 0 && (
-        <div className="flex items-center gap-4 border-2 border-fg bg-acid px-5 py-3.5 shadow-hard">
+        <div className="flex items-center gap-4 edge bg-acid px-5 py-3.5 text-acid-fg lift">
           <Icon name="terminal" className="size-5 shrink-0" />
           <div className="flex min-w-0 flex-1 flex-col gap-0.5">
             <span className="font-display text-[20px] uppercase leading-none">Hand it to your agent</span>
-            <span className="text-fg-2">
+            <span>
               One prompt covering the {openFindings.length} open finding{openFindings.length > 1 ? "s" : ""} on <span className="font-mono">{branch}</span>.
             </span>
           </div>
@@ -193,14 +193,14 @@ export default function LocalReviewDetail({
       )}
 
       {showThread && (
-        <section className="overflow-hidden border-2 border-fg bg-term-bg shadow-hard font-mono text-xs leading-5 text-term-fg">
-          <div className="flex h-[38px] items-center gap-2.5 border-b border-term-border pl-3.5 pr-3 font-sans text-xs text-term-head">
+        <section className="overflow-hidden edge bg-term-bg lift font-mono text-xs leading-5 text-term-fg">
+          <div className="flex h-[38px] items-center gap-2.5 edge-term-b pl-3.5 pr-3 font-sans text-xs text-term-head">
             <span className="inline-flex items-center gap-1.5">
               <Icon name="terminal" className="size-3.5" />
               Review thread
             </span>
             <span className="font-mono text-term-muted">{threadData ? `${threadData.log.length} entries` : "loading…"}</span>
-            <Button variant="quiet" size="sm" className="ml-auto text-term-head hover:bg-white/10 hover:text-white" onClick={() => refetchThread()}>
+            <Button variant="quiet" size="sm" className="ml-auto text-term-head hover:bg-term-border hover:text-term-fg" onClick={() => refetchThread()}>
               <Icon name="refresh" />
               Refresh
             </Button>
@@ -224,7 +224,7 @@ export default function LocalReviewDetail({
 
       {review && (
         <Card className="overflow-hidden">
-          <div className="flex h-12 items-center gap-3 border-b-2 border-fg pl-5 pr-4">
+          <div className="flex h-12 items-center gap-3 edge-b pl-5 pr-4">
             <span className="font-display text-[20px] uppercase leading-none">Findings</span>
             <span className="font-mono text-xs text-fg-3">{sortedFindings.length}</span>
             {sortedFindings.length > 0 && (
@@ -248,7 +248,7 @@ export default function LocalReviewDetail({
                 key={finding.id}
                 type="button"
                 onClick={() => onSelectFinding(finding.id)}
-                className="group flex h-13 w-full items-center gap-3 border-b border-border-soft pl-5 pr-4 text-left outline-none last:border-b-0 hover:bg-acid focus-visible:bg-acid focus-visible:shadow-[inset_5px_0_0_var(--color-primary)]"
+                className="group flex h-13 w-full items-center gap-3 edge-soft-b pl-5 pr-4 text-left outline-none last:border-b-0 hover:bg-row-hover focus-visible:bg-row-hover focus-visible:shadow-[inset_5px_0_0_var(--color-primary)]"
               >
                 <SeverityBadge severity={finding.severity} className="w-[84px] justify-center" />
                 <span className="w-[300px] shrink-0 truncate font-mono text-xs text-fg-3" title={finding.file}>

@@ -216,14 +216,14 @@ export default function CommandPalette({ open, onClose, onJump }: { open: boolea
         role="dialog"
         aria-modal="true"
         aria-label="Jump to"
-        className="flex max-h-[72vh] w-full max-w-[680px] flex-col border-2 border-fg bg-surface shadow-hard focus-within:outline-3 focus-within:outline-offset-3 focus-within:outline-primary"
+        className="flex max-h-[72vh] w-full max-w-[680px] flex-col edge bg-surface lift focus-within:outline-3 focus-within:outline-offset-3 focus-within:outline-primary"
         onMouseDown={(e) => {
           e.stopPropagation();
           // Keep focus in the input when clicking the list, so typing and the arrows keep working.
           if (e.target !== inputRef.current) e.preventDefault();
         }}
       >
-        <div className="flex h-[54px] shrink-0 items-center gap-3 border-b-2 border-fg px-4">
+        <div className="flex h-[54px] shrink-0 items-center gap-3 edge-b px-4">
           <Icon name="search" className="size-4 shrink-0 text-fg-3" />
           <input
             ref={inputRef}
@@ -250,7 +250,7 @@ export default function CommandPalette({ open, onClose, onJump }: { open: boolea
           )}
           {groups.map((g, gi) => (
             <div key={g.group} role="group" aria-label={g.group}>
-              <div className={`flex h-7 items-center gap-2 border-b-2 border-fg bg-subtle px-4 label-caps text-fg-2 ${gi > 0 ? "border-t-2" : ""}`}>
+              <div className={`flex h-7 items-center gap-2 edge-b bg-subtle px-4 label-caps text-fg-2 ${gi > 0 ? "edge-t" : ""}`}>
                 {g.group}
                 <span className="font-mono tracking-normal text-fg-3">{g.total > g.items.length ? `${g.items.length} of ${g.total}` : g.total}</span>
               </div>
@@ -267,7 +267,7 @@ export default function CommandPalette({ open, onClose, onJump }: { open: boolea
                     aria-selected={on}
                     onMouseMove={() => setActive(i)}
                     onClick={() => choose(item)}
-                    className={`flex h-12 cursor-pointer items-center gap-3 border-b border-border-soft px-4 last:border-b-0 ${on ? "bg-acid" : ""}`}
+                    className={`flex h-12 cursor-pointer items-center gap-3 edge-soft-b px-4 last:border-b-0 ${on ? "bg-row-hover" : ""}`}
                   >
                     <Icon name={item.icon} className="size-4 shrink-0 text-fg-3" />
                     <div className="flex min-w-0 flex-1 flex-col">
@@ -282,7 +282,7 @@ export default function CommandPalette({ open, onClose, onJump }: { open: boolea
           ))}
         </div>
 
-        <div className="flex h-9 shrink-0 items-center gap-4 border-t-2 border-fg bg-subtle px-4 label-caps text-fg-2">
+        <div className="flex h-9 shrink-0 items-center gap-4 edge-t bg-subtle px-4 label-caps text-fg-2">
           <span>↑↓ move</span>
           <span>↵ open</span>
           <span>Esc close</span>

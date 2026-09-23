@@ -13,13 +13,13 @@ interface PagerProps {
 
 // The end of the range is disabled, never hidden, so the control does not move under the cursor.
 const BTN =
-  "inline-flex h-[30px] w-8 items-center justify-center bg-surface text-fg hover:bg-acid focus-ring disabled:cursor-not-allowed disabled:bg-subtle disabled:text-fg-3 [&_svg]:size-4";
+  "inline-flex h-[30px] w-8 items-center justify-center bg-surface text-fg hover:bg-acid hover:text-acid-fg focus-ring disabled:cursor-not-allowed disabled:bg-subtle disabled:text-fg-3 [&_svg]:size-4";
 
 export default function Pager({ label, prevLabel, nextLabel, onPrev, onNext, prevKey, nextKey }: PagerProps) {
   return (
     <div className="flex items-center gap-2">
       <span className="label-caps text-fg-3">{label}</span>
-      <div role="group" aria-label={label} className="inline-flex border-2 border-fg">
+      <div role="group" aria-label={label} className="inline-flex edge">
         <button
           type="button"
           className={BTN}
@@ -33,7 +33,7 @@ export default function Pager({ label, prevLabel, nextLabel, onPrev, onNext, pre
         </button>
         <button
           type="button"
-          className={`${BTN} border-l-2 border-fg`}
+          className={`${BTN} edge-l`}
           aria-label={nextLabel}
           title={nextKey ? `${nextLabel} (${nextKey})` : nextLabel}
           aria-keyshortcuts={nextKey}

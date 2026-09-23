@@ -51,14 +51,14 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           <div
             key={t.id}
             role="status"
-            className={`pointer-events-auto flex min-w-[300px] max-w-[480px] items-center gap-2.5 border-2 border-fg bg-fg px-3 py-2.5 text-[13px] text-page transition-[opacity,transform] duration-[100ms] ${
-              t.kind === "success" ? "shadow-[5px_5px_0_var(--color-acid)]" : "shadow-[5px_5px_0_var(--color-danger)]"
+            className={`pointer-events-auto flex min-w-[300px] max-w-[480px] items-center gap-2.5 edge bg-fg px-3 py-2.5 text-[13px] text-page transition-[opacity,transform] duration-[100ms] ${
+              t.kind === "success" ? "shadow-[var(--shadow-toast-ok)]" : "shadow-[var(--shadow-toast-err)]"
             } ${t.leaving ? "translate-y-2 opacity-0" : "animate-toast-enter"}`}
           >
-            <Icon name={t.kind === "success" ? "checkCircle" : "alert"} className={`size-4 shrink-0 ${t.kind === "success" ? "text-acid" : "text-danger"}`} />
+            <Icon name={t.kind === "success" ? "checkCircle" : "alert"} className={`size-4 shrink-0 ${t.kind === "success" ? "text-inverse-accent" : "text-danger"}`} />
             <span className="min-w-0 break-words">{t.message}</span>
             {t.link && (
-              <a href={t.link.href} target="_blank" rel="noreferrer" className="ml-1 shrink-0 font-bold text-acid underline hover:text-page">
+              <a href={t.link.href} target="_blank" rel="noreferrer" className="ml-1 shrink-0 font-bold text-inverse-accent underline hover:text-page">
                 {t.link.label}
               </a>
             )}
@@ -66,7 +66,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               type="button"
               aria-label="Dismiss notification"
               onClick={() => dismiss(t.id)}
-              className="ml-auto inline-flex shrink-0 p-0.5 text-term-muted hover:bg-acid hover:text-fg focus-ring"
+              className="ml-auto inline-flex shrink-0 p-0.5 text-page hover:bg-acid hover:text-acid-fg focus-ring"
             >
               <Icon name="x" className="size-3.5" />
             </button>

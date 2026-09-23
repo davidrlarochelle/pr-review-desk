@@ -3,7 +3,7 @@ import Icon, { type IconName } from "./Icon";
 
 // Focus is a 3px outline outside the ink border, never a replacement for it.
 export const SHELL =
-  "group inline-flex h-[38px] items-center gap-2 border-2 border-fg bg-surface px-2.5 text-[13px] text-fg shadow-hard-sm focus-within:outline-3 focus-within:outline-offset-3 focus-within:outline-primary has-disabled:bg-subtle has-disabled:border-fg-3 has-disabled:text-fg-3 has-disabled:shadow-none";
+  "group inline-flex h-[var(--ctl-h)] items-center gap-2 edge bg-surface px-2.5 text-[13px] text-fg lift-sm focus-within:outline-3 focus-within:outline-offset-3 focus-within:outline-primary has-disabled:bg-subtle has-disabled:border-fg-3 has-disabled:text-fg-3 has-disabled:shadow-none";
 
 interface ShellProps {
   icon?: IconName;
@@ -62,7 +62,7 @@ export function Input({ icon, label, wrapperClassName, error, id, className = ""
 export function Textarea({ className = "", ...rest }: TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return (
     <textarea
-      className={`block w-full resize-y border-2 border-fg bg-surface px-2.5 py-2 font-mono text-xs leading-[19px] text-fg-2 shadow-hard-sm focus-ring disabled:cursor-not-allowed disabled:border-fg-3 disabled:bg-subtle disabled:text-fg-3 disabled:shadow-none ${className}`}
+      className={`block w-full resize-y edge bg-surface px-2.5 py-2 font-mono text-xs leading-[19px] text-fg-2 lift-sm focus-ring disabled:cursor-not-allowed disabled:border-fg-3 disabled:bg-subtle disabled:text-fg-3 disabled:shadow-none ${className}`}
       {...rest}
     />
   );
@@ -74,14 +74,16 @@ interface SegmentedProps<T extends string> {
   options: { value: T; label: string }[];
   disabled?: boolean;
   ariaLabel: string;
+  /** Stretch to the container, segments sharing the width. */
+  block?: boolean;
 }
 
-export function Segmented<T extends string>({ value, onChange, options, disabled, ariaLabel }: SegmentedProps<T>) {
+export function Segmented<T extends string>({ value, onChange, options, disabled, ariaLabel, block = false }: SegmentedProps<T>) {
   return (
     <div
       role="radiogroup"
       aria-label={ariaLabel}
-      className={`inline-flex border-2 ${disabled ? "border-fg-3 bg-subtle" : "border-fg bg-surface shadow-hard-sm"}`}
+      className={`${block ? "flex w-full" : "inline-flex"} edge ${disabled ? "border-fg-3 bg-subtle" : "bg-surface lift-sm"}`}
     >
       {options.map((o) => {
         const on = o.value === value;
@@ -93,8 +95,8 @@ export function Segmented<T extends string>({ value, onChange, options, disabled
             aria-checked={on}
             disabled={disabled}
             onClick={() => onChange(o.value)}
-            className={`h-[34px] border-l-2 border-fg px-3 label-caps text-[11px] focus-ring first:border-l-0 disabled:cursor-not-allowed disabled:border-fg-3 disabled:text-fg-3 ${
-              on ? "bg-acid text-fg disabled:bg-subtle-2" : "text-fg-2 hover:bg-subtle hover:text-fg"
+            className={`${block ? "flex-1" : ""} h-[calc(var(--ctl-h)-4px)] edge-l px-3 label-caps text-[11px] focus-ring first:border-l-0 disabled:cursor-not-allowed disabled:border-fg-3 disabled:text-fg-3 ${
+              on ? "bg-seg-on-bg text-seg-on-fg disabled:bg-subtle-2" : "text-fg-2 hover:bg-subtle hover:text-fg"
             }`}
           >
             {o.label}
@@ -124,8 +126,8 @@ export function Checkbox({ checked, onChange, disabled, ariaLabel }: CheckboxPro
         e.stopPropagation();
         onChange();
       }}
-      className={`inline-flex size-[18px] shrink-0 items-center justify-center border-2 border-fg focus-ring disabled:cursor-not-allowed disabled:border-fg-3 disabled:bg-subtle disabled:text-fg-3 ${
-        checked ? "bg-primary text-white" : "bg-surface hover:bg-acid"
+      className={`inline-flex size-[18px] shrink-0 items-center justify-center edge focus-ring disabled:cursor-not-allowed disabled:border-fg-3 disabled:bg-subtle disabled:text-fg-3 ${
+        checked ? "bg-primary text-primary-fg" : "bg-surface hover:bg-acid"
       }`}
     >
       {checked && <Icon name="check" className="size-[11px]" />}

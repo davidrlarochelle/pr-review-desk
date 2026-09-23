@@ -7,7 +7,7 @@ export function TableSkeleton({ rows = 5, cols = 4 }: { rows?: number; cols?: nu
   return (
     <div role="status" aria-label="Loading">
       {Array.from({ length: rows }).map((_, r) => (
-        <div key={r} className="flex h-13 items-center gap-4 border-b border-border-soft px-4 last:border-b-0">
+        <div key={r} className="flex h-13 items-center gap-4 edge-soft-b px-4 last:border-b-0">
           {Array.from({ length: cols }).map((_, c) => (
             <Skeleton key={c} className={`h-3 ${widths[c % widths.length]}`} />
           ))}
@@ -20,7 +20,7 @@ export function TableSkeleton({ rows = 5, cols = 4 }: { rows?: number; cols?: nu
 
 export function CardSkeleton({ lines = 2 }: { lines?: number }) {
   return (
-    <div role="status" aria-label="Loading" className="flex flex-col gap-2.5 border-2 border-fg bg-surface p-4 shadow-hard">
+    <div role="status" aria-label="Loading" className="flex flex-col gap-2.5 edge bg-surface p-4 lift">
       <Skeleton className="h-2.5 w-16" />
       {Array.from({ length: lines }).map((_, i) => (
         <Skeleton key={i} className={`h-[11px] ${i === lines - 1 ? "w-3/5" : "w-full"}`} />

@@ -24,8 +24,8 @@ export function initials(name: string): string {
   return clean.slice(0, 2).toUpperCase();
 }
 
-// Flat accent fills (sky / amber / green / subtle), ink initials — no gradients.
-const AVATAR_PALETTES = ["bg-sev-low-bg", "bg-sev-high-bg", "bg-success", "bg-subtle"];
+// Flat accent fills (sky / amber / green / subtle in brutalism, all quiet in blueprint) — no gradients.
+const AVATAR_PALETTES = ["bg-avatar-1", "bg-avatar-2", "bg-avatar-3", "bg-avatar-4"];
 
 export function avatarClass(name: string): string {
   let h = 0;

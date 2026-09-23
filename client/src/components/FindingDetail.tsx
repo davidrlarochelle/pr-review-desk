@@ -24,7 +24,7 @@ type BandTone = "info" | "problem" | "summary";
 
 function Section({ title, body, tone, last = false }: { title: string; body: string; tone: BandTone; last?: boolean }) {
   return (
-    <div className={`flex flex-col ${last ? "" : "border-b-2 border-fg"}`}>
+    <div className={`flex flex-col ${last ? "" : "edge-b"}`}>
       <Band tone={tone}>{title}</Band>
       <p className="whitespace-pre-wrap px-5 py-3.5 text-fg-2">{body}</p>
     </div>
@@ -177,7 +177,7 @@ export default function FindingDetail({
         </div>
       )}
       {finding.suggestedFix && (
-        <div className={`flex min-w-0 flex-col ${evidenceLeft.length > 0 ? "border-l-2 border-fg" : ""}`}>
+        <div className={`flex min-w-0 flex-col ${evidenceLeft.length > 0 ? "edge-l" : ""}`}>
           <Section title="Suggested fix" body={finding.suggestedFix} tone="summary" last />
         </div>
       )}
@@ -186,7 +186,7 @@ export default function FindingDetail({
 
   const references = finding.references.length > 0 && (
     <Card className="flex flex-col">
-      <div className="flex h-11 items-center gap-2 border-b-2 border-fg px-4">
+      <div className="flex h-11 items-center gap-2 edge-b px-4">
         <span className="label-caps">References</span>
         <span className="font-mono text-xs text-fg-3">{finding.references.length}</span>
       </div>
@@ -206,9 +206,9 @@ export default function FindingDetail({
             </>
           );
           return (
-            <li key={idx} className="border-b border-border-soft last:border-b-0">
+            <li key={idx} className="edge-soft-b last:border-b-0">
               {href ? (
-                <a href={href} target="_blank" rel="noreferrer" className="flex flex-col gap-0.5 px-4 py-2.5 text-fg hover:bg-acid hover:no-underline focus-ring">
+                <a href={href} target="_blank" rel="noreferrer" className="flex flex-col gap-0.5 px-4 py-2.5 text-fg hover:bg-row-hover hover:no-underline focus-ring">
                   {content}
                 </a>
               ) : (
@@ -250,7 +250,7 @@ export default function FindingDetail({
           </div>
           <h1 className="text-xl font-bold leading-[28px] tracking-[-0.015em]">{finding.title}</h1>
           {githubUrl ? (
-            <a href={githubUrl} target="_blank" rel="noreferrer" className="inline-flex w-fit items-center gap-1.5 font-mono text-xs text-fg-2 hover:bg-acid hover:text-fg focus-ring">
+            <a href={githubUrl} target="_blank" rel="noreferrer" className="inline-flex w-fit items-center gap-1.5 font-mono text-xs text-fg-2 hover:bg-acid hover:text-acid-fg focus-ring">
               <Icon name="file" className="size-3.5 text-fg-3" />
               {finding.file}
               {lineRange && <span className="text-fg-3">:{lineRange}</span>}
@@ -289,7 +289,7 @@ export default function FindingDetail({
 
           <aside className="flex flex-col gap-4">
             <Card className="flex flex-col">
-              <div className="flex h-11 items-center gap-2 border-b-2 border-fg pl-4 pr-3">
+              <div className="flex h-11 items-center gap-2 edge-b pl-4 pr-3">
                 <span className="label-caps">Comment</span>
                 <span className="font-mono text-[11px] text-fg-3">
                   {saveState === "saving" ? "saving…" : saveState === "saved" ? "draft saved" : finding.draftComment ? "edited" : "suggested"}
@@ -334,12 +334,12 @@ export default function FindingDetail({
                 )}
               </div>
               {isPosted && (
-                <div className="flex flex-col gap-1 border-t-2 border-fg bg-success-soft px-4 py-3 text-success-ink">
+                <div className="flex flex-col gap-1 edge-t bg-success-soft px-4 py-3 text-success-ink">
                   <div className="flex items-center gap-2">
                     <Icon name="checkCircle" className="size-4" />
                     <span className="font-medium">Posted as {finding.postedAs === "pending-review" ? "pending review comment" : "comment"}</span>
                     {finding.commentUrl && (
-                      <a href={finding.commentUrl} target="_blank" rel="noreferrer" className="ml-auto inline-flex items-center gap-1 text-xs font-bold text-success-ink hover:bg-acid focus-ring">
+                      <a href={finding.commentUrl} target="_blank" rel="noreferrer" className="ml-auto inline-flex items-center gap-1 text-xs font-bold text-success-ink hover:bg-acid hover:text-acid-fg focus-ring">
                         View on GitHub
                         <Icon name="external" className="size-3.5" />
                       </a>
@@ -360,7 +360,7 @@ export default function FindingDetail({
         <DiffViewer patch={diffData.patch} file={finding.file} highlightStart={finding.startLine} highlightEnd={finding.endLine} side={finding.side} />
       ) : diffError && !diffLoading ? (
         <Card className="overflow-hidden">
-          <div className="flex h-[38px] items-center gap-1.5 border-b-2 border-fg bg-subtle px-3.5 font-mono text-xs text-fg-2">
+          <div className="flex h-[38px] items-center gap-1.5 edge-b bg-subtle px-3.5 font-mono text-xs text-fg-2">
             <Icon name="file" className="size-3.5 text-fg-3" />
             {finding.file}
           </div>
@@ -371,7 +371,7 @@ export default function FindingDetail({
               {githubUrl && (
                 <>
                   {" "}
-                  <a href={githubUrl} target="_blank" rel="noreferrer" className="font-bold underline hover:bg-acid focus-ring">
+                  <a href={githubUrl} target="_blank" rel="noreferrer" className="font-bold underline hover:bg-acid hover:text-acid-fg focus-ring">
                     Open it on GitHub
                   </a>
                   .
@@ -382,7 +382,7 @@ export default function FindingDetail({
         </Card>
       ) : (
         <Card className="overflow-hidden">
-          <div className="flex h-[38px] items-center gap-3 border-b-2 border-fg bg-subtle px-3.5">
+          <div className="flex h-[38px] items-center gap-3 edge-b bg-subtle px-3.5">
             <Skeleton className="h-3 w-64" />
           </div>
           <div className="flex flex-col gap-2 p-3.5">

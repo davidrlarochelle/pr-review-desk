@@ -5,6 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <title>PR Review Desk</title>
+  <script>
+    try {
+      var d = document.documentElement.dataset;
+      d.system = localStorage.getItem("prd:system") || "brutal";
+      d.theme  = localStorage.getItem("prd:theme")  || "light";
+    } catch (e) {}
+  </script>
 </head>
 <body class="min-h-screen">
   <div id="root"></div>

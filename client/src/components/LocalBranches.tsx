@@ -23,13 +23,13 @@ interface LocalBranch {
   current: boolean;
 }
 
-const TH = "h-10 whitespace-nowrap bg-subtle px-3 text-left label-caps text-fg-2 border-b-2 border-fg first:pl-4";
+const TH = "h-10 whitespace-nowrap bg-subtle px-3 text-left label-caps text-fg-2 edge-b first:pl-4";
 // Row dividers are the one hairline allowed: they sit inside a bordered block.
-const TD = "h-13 whitespace-nowrap px-3 align-middle border-b border-border-soft group-last:border-b-0 first:pl-4";
+const TD = "h-[var(--row-h)] whitespace-nowrap px-3 align-middle edge-soft-b group-last:border-b-0 first:pl-4";
 // The row is the click target; the branch name is the real control, so its name is the accessible name.
-// Hover fills the cells acid with no transition; keyboard focus draws a blue bar on the first cell.
+// Hover fills the cells (acid in brutalism) with no transition; keyboard focus draws a blue bar on the first cell.
 const ROW =
-  "group cursor-pointer hover:[&>td]:bg-acid has-[:focus-visible]:[&>td]:bg-acid has-[:focus-visible]:[&>td:first-child]:shadow-[inset_5px_0_0_var(--color-primary)]";
+  "group cursor-pointer hover:[&>td]:bg-row-hover has-[:focus-visible]:[&>td]:bg-row-hover has-[:focus-visible]:[&>td:first-child]:shadow-[inset_5px_0_0_var(--color-primary)]";
 
 function branchFromRepoId(repoId: string): string {
   const match = repoId.match(/^local\/(.+)-[a-f0-9]{10}$/);
@@ -131,7 +131,7 @@ export default function LocalBranches({
       </div>
 
       <Card className="flex flex-col">
-        <div className="flex flex-wrap items-center gap-2 border-b-2 border-fg px-5 py-3.5">
+        <div className="flex flex-wrap items-center gap-2 edge-b px-5 py-3.5">
           <Select id="local-repo" icon="repo" wrapperClassName="w-56" value={repo} onChange={(e) => { setRepoLabel(e.target.value); setBranch(""); setBase(""); }}>
             {(repos ?? []).map((r) => (
               <option key={r.label} value={r.label}>
@@ -167,7 +167,7 @@ export default function LocalBranches({
           />
         </div>
 
-        <div className="flex items-center gap-2 border-b-2 border-fg bg-subtle px-5 py-3">
+        <div className="flex items-center gap-2 edge-b bg-subtle px-5 py-3">
           <Select id="local-model" icon="cpu" label="Model" wrapperClassName="w-[168px]" value={model} onChange={(e) => setModel(e.target.value)} disabled={isRunning}>
             <option value="sonnet">Sonnet</option>
             <option value="opus">Opus</option>
@@ -216,7 +216,7 @@ export default function LocalBranches({
         )}
 
         {branch && branch === base && (
-          <div className="flex items-center gap-2 border-t-2 border-fg bg-acid-soft px-5 py-3 text-xs text-fg-2">
+          <div className="flex items-center gap-2 edge-t bg-acid-soft px-5 py-3 text-xs text-fg-2">
             <Icon name="alert" className="size-3.5 text-fg" />
             Pick a different base branch to diff against.
           </div>
@@ -237,7 +237,7 @@ export default function LocalBranches({
           <TableSkeleton rows={4} cols={5} />
         ) : !allReviews || allReviews.length === 0 ? (
           <div className="flex min-h-[200px] flex-col items-center justify-center gap-3 p-10 text-center">
-            <div className="inline-flex size-12 items-center justify-center border-2 border-fg bg-acid text-fg shadow-hard-sm">
+            <div className="inline-flex size-12 items-center justify-center edge bg-acid text-acid-fg lift-sm">
               <Icon name="inbox" className="size-5" />
             </div>
             <div className="flex flex-col gap-1.5">
@@ -293,7 +293,7 @@ export default function LocalBranches({
                     <td className={`${TD} text-xs`}>
                       {r.totalFindings > 0 ? (
                         <span className="inline-flex items-center gap-1.5 font-mono text-fg-2">
-                          <span className="size-2 border border-fg bg-sev-medium-dot" />
+                          <span className="size-2 edge-hair bg-sev-medium-dot" />
                           {r.openFindings} open
                         </span>
                       ) : (

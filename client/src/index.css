@@ -1,148 +1,155 @@
-/* Neo-brutalist theme — drop-in replacement for client/src/index.css.
-   Token NAMES are unchanged wherever possible so most components keep working;
-   what changes is values, radii (all 0), shadows (hard offsets) and border width (2px).
-   Design canvas: see docs/redesign/README.md */
+/* Two design systems, one token grid (from docs/redesign/index.css).
+   Token NAMES never change between systems, so components read bg-surface / text-fg
+   and follow whichever system is active. See docs/redesign/theming.md. */
 
-@import url("https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Martian+Mono:wght@400;600;800&display=swap");
 @import "tailwindcss";
 
+/* Defaults live in @theme so Tailwind generates the utilities.
+   These values are NEO-BRUTALISM / LIGHT. Every other combination is an
+   override in @layer base below. */
 @theme {
   --font-sans: "Archivo", "Helvetica Neue", Helvetica, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
-  --font-display: "Anton", "Archivo", Impact, sans-serif;
+  --font-display: "Anton", Impact, sans-serif;
 
-  /* Ground */
   --color-page: #ede9e0;
   --color-surface: #ffffff;
   --color-subtle: #e2ddd2;
   --color-subtle-2: #d6d0c2;
-
-  /* Structure. There is no hairline any more: borders are 2px ink, or nothing.
-     --color-border-soft is the ONLY exception: rules *inside* a bordered block. */
   --color-border: #0f0e0c;
-  --color-border-strong: #0f0e0c;
   --color-border-soft: #c9c3b6;
-
-  /* Ink. The old 5-step grey ramp collapses to three: content, secondary, meta. */
   --color-fg: #0f0e0c;
   --color-fg-2: #3c3931;
   --color-fg-3: #6b675c;
   --color-muted: #6b675c;
   --color-faint: #6b675c;
 
-  /* Accents. Blue is the only fill that takes white text. */
   --color-primary: #2b3ff0;
   --color-primary-hover: #1b2bc4;
-  --color-primary-soft: #dcf23c;      /* selected rows are acid, not a blue tint */
-  --color-primary-soft-2: #dcf23c;
-  --color-primary-ring: #2b3ff0;
-  --color-acid: #dcf23c;
-  --color-acid-soft: #f6fbd4;
+  --color-primary-fg: #ffffff;
+  --color-highlight: #dcf23c;
 
-  --color-danger: #ff5a1f;            /* fill */
-  --color-danger-ink: #c23a08;        /* danger text on light ground */
-  --color-danger-soft: #ffe8e0;
-  --color-danger-border: #0f0e0c;
-  --color-success: #00a85a;           /* fill */
-  --color-success-ink: #00733e;       /* additions, success text */
-  --color-success-soft: #cff5df;
+  --color-success: #00a85a;
+  --color-success-ink: #00733e;
+  --color-warn: #ff9e1f;
+  --color-warn-ink: #a85e00;
+  --color-danger: #ff5a1f;
+  --color-danger-ink: #c23a08;
 
-  /* Severity: bg is the fill, fg is the label on it. Runs hot to cold. */
-  --color-sev-blocker: #0f0e0c;
-  --color-sev-blocker-bg: #ff4d2d;
-  --color-sev-high: #0f0e0c;
-  --color-sev-high-bg: #ff9e1f;
-  --color-sev-medium: #0f0e0c;
-  --color-sev-medium-bg: #dcf23c;
-  --color-sev-low: #0f0e0c;
-  --color-sev-low-bg: #7cc8ff;
-  --color-sev-nit: #3c3931;
-  --color-sev-nit-bg: #ffffff;
+  --color-sev-blocker-bg: #ff4d2d;  --color-sev-blocker-fg: #0f0e0c;
+  --color-sev-high-bg: #ff9e1f;     --color-sev-high-fg: #0f0e0c;
+  --color-sev-medium-bg: #dcf23c;   --color-sev-medium-fg: #0f0e0c;
+  --color-sev-low-bg: #7cc8ff;      --color-sev-low-fg: #0f0e0c;
+  --color-sev-nit-bg: #ffffff;      --color-sev-nit-fg: #3c3931;
 
-  /* Legacy dot tokens: the badges no longer draw dots, but the names are kept
-     (PRList / LocalBranches meta dots still read them). Same value as the fill. */
-  --color-sev-blocker-dot: #ff4d2d;
-  --color-sev-high-dot: #ff9e1f;
-  --color-sev-medium-dot: #dcf23c;
-  --color-sev-low-dot: #7cc8ff;
-  --color-sev-nit-dot: #ffffff;
+  --color-st-none-bg: #ffffff;      --color-st-none-fg: #0f0e0c;
+  --color-st-queued-bg: #2b3ff0;    --color-st-queued-fg: #ffffff;
+  --color-st-running-bg: #dcf23c;   --color-st-running-fg: #0f0e0c;
+  --color-st-reported-bg: #00a85a;  --color-st-reported-fg: #0f0e0c;
+  --color-st-failed-bg: #ff5a1f;    --color-st-failed-fg: #0f0e0c;
 
-  /* Review status. No dot, no ping — the fill is the signal. */
-  --color-st-none: #0f0e0c;
-  --color-st-none-bg: #ffffff;
-  --color-st-queued: #ffffff;
-  --color-st-queued-bg: #2b3ff0;
-  --color-st-running: #0f0e0c;
-  --color-st-running-bg: #dcf23c;
-  --color-st-reported: #0f0e0c;
-  --color-st-reported-bg: #00a85a;
-  --color-st-failed: #0f0e0c;
-  --color-st-failed-bg: #ff5a1f;
-  --color-st-none-dot: #ffffff;
-  --color-st-queued-dot: #2b3ff0;
-  --color-st-running-dot: #dcf23c;
-  --color-st-reported-dot: #00a85a;
-  --color-st-failed-dot: #ff5a1f;
+  --color-diff-add-bg: #cff5df;   --color-diff-add-fg: #00542c;   --color-diff-add-gutter: #a8e8c4;
+  --color-diff-del-bg: #ffe0d6;   --color-diff-del-fg: #8f2d0c;   --color-diff-del-gutter: #ffc2ae;
+  --color-diff-hunk-bg: #0f0e0c;  --color-diff-hunk-fg: #dcf23c;
+  --color-diff-hl-bg: #dcf23c;    --color-diff-hl-fg: #0f0e0c;    --color-diff-hl-gutter: #c2d71f;
 
-  /* Diff */
-  --color-diff-add-bg: #cff5df;
-  --color-diff-add-fg: #00542c;
-  --color-diff-add-gutter: #a8e8c4;
-  --color-diff-add-ln: #00542c;
-  --color-diff-del-bg: #ffe0d6;
-  --color-diff-del-fg: #8f2d0c;
-  --color-diff-del-gutter: #ffc2ae;
-  --color-diff-del-ln: #8f2d0c;
-  --color-diff-hunk-bg: #0f0e0c;
-  --color-diff-hunk-fg: #dcf23c;
-  --color-diff-hl-bg: #dcf23c;
-  --color-diff-hl-gutter: #c2d71f;
-  --color-diff-hl-fg: #0f0e0c;
-  --color-diff-hl-ln: #0f0e0c;
-  --color-diff-hl-marker: #0f0e0c;
-
-  /* Thread / terminal */
   --color-term-bg: #0f0e0c;
   --color-term-border: #46443c;
   --color-term-fg: #ede9e0;
-  --color-term-head: #ede9e0;
   --color-term-muted: #aba69a;
   --color-term-tool: #dcf23c;
-  --color-term-line: #6b675c;
 
-  /* Rail (new) */
   --color-rail-bg: #0f0e0c;
   --color-rail-fg: #aba69a;
   --color-rail-hover: #26251f;
   --color-rail-line: #57544c;
 
-  /* Radius is 0 with no exceptions, including avatars and checkboxes.
-     The scale is kept so existing rounded-* classes compile to nothing. */
   --radius-sm: 0px;
   --radius-md: 0px;
   --radius-lg: 0px;
   --radius-xl: 0px;
 
-  /* Shadows are never blurred and never tinted: ink, offset down-right. */
-  --shadow-hard: 5px 5px 0 #0f0e0c;
-  --shadow-hard-sm: 3px 3px 0 #0f0e0c;
-  --shadow-hard-press: 1px 1px 0 #0f0e0c;
+  --shadow-lift: 5px 5px 0 #0f0e0c;
+  --shadow-lift-sm: 3px 3px 0 #0f0e0c;
+  --shadow-press: 1px 1px 0 #0f0e0c;
   --shadow-xs: none;
   --shadow-sm: 3px 3px 0 #0f0e0c;
   --shadow-md: 5px 5px 0 #0f0e0c;
   --shadow-lg: 5px 5px 0 #0f0e0c;
-  --shadow-ring: none;          /* focus is an outline now, see the focus-ring utility */
+
+  /* ── Tokens the spec file dropped but the components still read ──────────
+     Kept so no existing name disappears. Aliases resolve on <html>, so they
+     follow the active system; the rest are set in all four blocks below. */
+  --color-acid: #dcf23c;            /* the hover / active / selected fill */
+  --color-acid-fg: #0f0e0c;         /* text on that fill */
+  --color-row-hover: var(--color-acid); /* large fills whose text stays --color-fg */
+  --color-acid-soft: #f6fbd4;
+  --color-rail-accent: #dcf23c;     /* brand, mark and hover on the rail */
+  --color-inverse-accent: #dcf23c;  /* accent on the bg-fg toast */
+  --color-danger-soft: #ffe8e0;
+  --color-success-soft: #cff5df;
+  --color-term-line: #6b675c;
+  --color-diff-hl-marker: #0f0e0c;
+  --shadow-toast-ok: 5px 5px 0 #dcf23c;
+  --shadow-toast-err: 5px 5px 0 #ff5a1f;
+  --color-danger-fg: #0f0e0c;       /* text on the danger fill */
+  --color-seg-on-bg: var(--color-acid);   /* the active segment of a Segmented */
+  --color-seg-on-fg: var(--color-acid-fg);
+  --color-avatar-1: #7cc8ff;
+  --color-avatar-2: #ff9e1f;
+  --color-avatar-3: #00a85a;
+  --color-avatar-4: #e2ddd2;
+  --color-avatar-fg: #0f0e0c;
+  /* Label-band tones follow the status tokens: a fill in brutalism, a label in blueprint. */
+  --color-tone-neutral-bg: var(--color-subtle);   --color-tone-neutral-fg: var(--color-fg);
+  --color-tone-info-bg: var(--color-st-queued-bg);  --color-tone-info-fg: var(--color-st-queued-fg);
+  --color-tone-problem-bg: var(--color-st-failed-bg); --color-tone-problem-fg: var(--color-st-failed-fg);
+  --color-tone-summary-bg: var(--color-st-reported-bg); --color-tone-summary-fg: var(--color-st-reported-fg);
+
+  --color-border-strong: var(--color-border);
+  --color-danger-border: var(--color-border);
+  --color-primary-ring: var(--color-primary);
+  --color-primary-soft: var(--color-row-hover);
+  --color-primary-soft-2: var(--color-row-hover);
+  --color-term-head: var(--color-term-fg);
+  --color-diff-add-ln: var(--color-diff-add-fg);
+  --color-diff-del-ln: var(--color-diff-del-fg);
+  --color-diff-hl-ln: var(--color-diff-hl-fg);
+  --color-sev-blocker: var(--color-sev-blocker-fg);
+  --color-sev-high: var(--color-sev-high-fg);
+  --color-sev-medium: var(--color-sev-medium-fg);
+  --color-sev-low: var(--color-sev-low-fg);
+  --color-sev-nit: var(--color-sev-nit-fg);
+  --color-st-none: var(--color-st-none-fg);
+  --color-st-queued: var(--color-st-queued-fg);
+  --color-st-running: var(--color-st-running-fg);
+  --color-st-reported: var(--color-st-reported-fg);
+  --color-st-failed: var(--color-st-failed-fg);
+  /* Dots are the signal colour: the fill in brutalism, the label in blueprint. */
+  --color-sev-blocker-dot: var(--color-sev-blocker-bg);
+  --color-sev-high-dot: var(--color-sev-high-bg);
+  --color-sev-medium-dot: var(--color-sev-medium-bg);
+  --color-sev-low-dot: var(--color-sev-low-bg);
+  --color-sev-nit-dot: var(--color-sev-nit-bg);
+  --color-st-none-dot: var(--color-st-none-bg);
+  --color-st-queued-dot: var(--color-st-queued-bg);
+  --color-st-running-dot: var(--color-st-running-bg);
+  --color-st-reported-dot: var(--color-st-reported-bg);
+  --color-st-failed-dot: var(--color-st-failed-bg);
+  --shadow-hard: var(--shadow-lift);
+  --shadow-hard-sm: var(--shadow-lift-sm);
+  --shadow-hard-press: var(--shadow-press);
+  --shadow-ring: none;
   --shadow-ring-danger: none;
 
-  /* Nothing eases. Every transition is linear and under 120ms. */
   --ease-out-soft: linear;
   --default-transition-timing-function: linear;
-
   --animate-view-enter: none;
-  --animate-toast-enter: toast-enter 120ms linear both;
   --animate-panel-enter: none;
-  --animate-ping-dot: none;     /* the running dot is gone; the acid block is the signal */
-  --animate-shimmer: none;      /* skeletons are static stripes */
+  --animate-ping-dot: none;
+  --animate-shimmer: none;
+  --animate-toast-enter: toast-enter 120ms linear both;
 
   @keyframes toast-enter {
     from { opacity: 0; transform: translateY(8px); }
@@ -151,33 +158,272 @@
 }
 
 @layer base {
+  /* Non-colour structural tokens. These are what actually make the two systems
+     look different — see theming.md. */
+  :root {
+    --bw: 2px;
+    --grid-color: transparent;
+    --grid-size: 0px;
+    --label-tracking: 0.14em;
+    --row-h: 52px;
+    --ctl-h: 38px;
+    --page-pad: 24px;
+    --h1-weight: 400;
+    --h1-tracking: -0.005em;
+  }
+
+  /* NEO-BRUTALISM · dark */
+  [data-theme="dark"] {
+    --color-page: #0d0d0c;
+    --color-surface: #171716;
+    --color-subtle: #1f1f1d;
+    --color-subtle-2: #2a2a27;
+    --color-border: #f4f1e8;
+    --color-border-soft: #383733;
+    --color-fg: #f4f1e8;
+    --color-fg-2: #c7c2b4;
+    --color-fg-3: #8b8779;
+    --color-muted: #8b8779;
+    --color-faint: #8b8779;
+    --color-primary: #5b6cff;
+    --color-primary-hover: #7d8aff;
+    --color-primary-fg: #0d0d0c;
+    --color-success: #22c97a;  --color-success-ink: #22c97a;
+    --color-warn: #ffa93d;     --color-warn-ink: #ffa93d;
+    --color-danger: #ff6b33;   --color-danger-ink: #ff8a5c;
+    --color-sev-blocker-bg: #ff5a45; --color-sev-high-bg: #ffa93d;
+    --color-sev-low-bg: #7cc8ff;
+    --color-sev-nit-bg: #171716;     --color-sev-nit-fg: #c7c2b4;
+    --color-st-none-bg: #171716;     --color-st-none-fg: #f4f1e8;
+    --color-st-queued-bg: #5b6cff;   --color-st-queued-fg: #0d0d0c;
+    --color-st-reported-bg: #22c97a; --color-st-failed-bg: #ff6b33;
+    --color-diff-add-bg: #12301f; --color-diff-add-fg: #6fd9a0; --color-diff-add-gutter: #1a4a2e;
+    --color-diff-del-bg: #331409; --color-diff-del-fg: #ff9e7d; --color-diff-del-gutter: #4a1e0e;
+    --color-rail-bg: #0d0d0c; --color-rail-hover: #26251f; --color-rail-line: #46443c;
+    --shadow-lift: 5px 5px 0 #f4f1e8;
+    --shadow-lift-sm: 3px 3px 0 #f4f1e8;
+    --shadow-press: 1px 1px 0 #f4f1e8;
+    --shadow-sm: 3px 3px 0 #f4f1e8;
+    --shadow-md: 5px 5px 0 #f4f1e8;
+    --shadow-lg: 5px 5px 0 #f4f1e8;
+
+    --color-acid-fg: #0d0d0c;
+    --color-acid-soft: #2b3010;
+    --color-row-hover: #34391a;       /* cream text would vanish on acid */
+    --color-inverse-accent: #2b3ff0;  /* the toast is cream here, so acid would vanish */
+    --color-danger-soft: #331409;
+    --color-success-soft: #12301f;
+    --color-diff-hl-marker: #0d0d0c;
+    --color-danger-fg: #0d0d0c;
+    --color-avatar-4: #d6d0c2;
+    --color-avatar-fg: #0d0d0c;
+  }
+
+  /* BLUEPRINT · light */
+  [data-system="blueprint"] {
+    --font-sans: "JetBrains Mono", ui-monospace, Menlo, monospace;
+    --font-display: "Martian Mono", "JetBrains Mono", monospace;
+
+    --bw: 1px;
+    --grid-color: rgba(17, 19, 17, 0.045);
+    --grid-size: 22px;
+    --label-tracking: 0.22em;
+    --row-h: 50px;
+    --ctl-h: 36px;
+    --page-pad: 26px;
+    --h1-weight: 800;
+    --h1-tracking: -0.03em;
+
+    --color-page: #f7f8f7;
+    --color-surface: #ffffff;
+    --color-subtle: #fafbfa;
+    --color-subtle-2: #f1f3f1;
+    --color-border: #e2e5e2;
+    --color-border-soft: #edefed;
+    --color-fg: #111311;
+    --color-fg-2: #4a4e4a;
+    --color-fg-3: #858a85;
+    --color-muted: #858a85;
+    --color-faint: #858a85;
+
+    --color-primary: #2563eb;
+    --color-primary-hover: #1d4ed8;
+    --color-primary-fg: #ffffff;
+    --color-highlight: #f1f3f1;
+
+    --color-success: #2e8b63;  --color-success-ink: #2e8b63;
+    --color-warn: #b8791e;     --color-warn-ink: #b8791e;
+    --color-danger: #c0392b;   --color-danger-ink: #c0392b;
+
+    /* Blueprint never fills a tag: the label carries the colour. */
+    --color-sev-blocker-bg: transparent; --color-sev-blocker-fg: #c0392b;
+    --color-sev-high-bg: transparent;    --color-sev-high-fg: #b8791e;
+    --color-sev-medium-bg: transparent;  --color-sev-medium-fg: #4a4e4a;
+    --color-sev-low-bg: transparent;     --color-sev-low-fg: #2563eb;
+    --color-sev-nit-bg: transparent;     --color-sev-nit-fg: #858a85;
+    --color-st-none-bg: transparent;     --color-st-none-fg: #858a85;
+    --color-st-queued-bg: transparent;   --color-st-queued-fg: #2563eb;
+    --color-st-running-bg: transparent;  --color-st-running-fg: #b8791e;
+    --color-st-reported-bg: transparent; --color-st-reported-fg: #2e8b63;
+    --color-st-failed-bg: transparent;   --color-st-failed-fg: #c0392b;
+
+    --color-diff-add-bg: #edf8f2; --color-diff-add-fg: #1f6b48; --color-diff-add-gutter: #dcefe5;
+    --color-diff-del-bg: #fdf0ee; --color-diff-del-fg: #9e2f22; --color-diff-del-gutter: #f7ddd8;
+    --color-diff-hunk-bg: #f1f3f1; --color-diff-hunk-fg: #4a4e4a;
+    --color-diff-hl-bg: #eaf1fe;   --color-diff-hl-fg: #111311; --color-diff-hl-gutter: #d6e4fd;
+
+    --color-term-bg: #111311; --color-term-border: #242825; --color-term-fg: #edefed;
+    --color-term-muted: #858a85; --color-term-tool: #5b8def;
+
+    --color-rail-bg: #ffffff; --color-rail-fg: #858a85;
+    --color-rail-hover: #f1f3f1; --color-rail-line: #e2e5e2;
+
+    --radius-sm: 2px; --radius-md: 2px; --radius-lg: 2px; --radius-xl: 2px;
+    --shadow-lift: none; --shadow-lift-sm: none; --shadow-press: none;
+    --shadow-sm: none; --shadow-md: none; --shadow-lg: none;
+
+    /* Blueprint has no acid: the fill goes quiet and the text carries the accent. */
+    --color-acid: #f1f3f1;
+    --color-acid-fg: #2563eb;
+    --color-acid-soft: #eaf1fe;
+    --color-rail-accent: #2563eb;
+    --color-inverse-accent: #7ba4f4;
+    --color-danger-soft: #fdf0ee;
+    --color-success-soft: #edf8f2;
+    --color-term-line: #5a5f5a;
+    --color-diff-hl-marker: #2563eb;
+    --shadow-toast-ok: none;
+    --shadow-toast-err: none;
+    --color-danger-fg: #ffffff;
+    --color-seg-on-bg: var(--color-primary);
+    --color-seg-on-fg: var(--color-primary-fg);
+    --color-avatar-1: var(--color-subtle);
+    --color-avatar-2: var(--color-subtle);
+    --color-avatar-3: var(--color-subtle);
+    --color-avatar-4: var(--color-subtle);
+    --color-avatar-fg: var(--color-fg-2);
+    --color-sev-blocker-dot: var(--color-sev-blocker-fg);
+    --color-sev-high-dot: var(--color-sev-high-fg);
+    --color-sev-medium-dot: var(--color-sev-medium-fg);
+    --color-sev-low-dot: var(--color-sev-low-fg);
+    --color-sev-nit-dot: var(--color-sev-nit-fg);
+    --color-st-none-dot: var(--color-st-none-fg);
+    --color-st-queued-dot: var(--color-st-queued-fg);
+    --color-st-running-dot: var(--color-st-running-fg);
+    --color-st-reported-dot: var(--color-st-reported-fg);
+    --color-st-failed-dot: var(--color-st-failed-fg);
+  }
+
+  /* BLUEPRINT · dark */
+  [data-system="blueprint"][data-theme="dark"] {
+    --grid-color: rgba(237, 239, 237, 0.05);
+    --color-page: #0e100f;
+    --color-surface: #141715;
+    --color-subtle: #171a18;
+    --color-subtle-2: #1c201e;
+    --color-border: #242825;
+    --color-border-soft: #1e221f;
+    --color-fg: #edefed;
+    --color-fg-2: #a8ada8;
+    --color-fg-3: #6e746e;
+    --color-muted: #6e746e;
+    --color-faint: #6e746e;
+    --color-primary: #5b8def;
+    --color-primary-hover: #7ba4f4;
+    --color-primary-fg: #0e100f;
+    --color-highlight: #1c201e;
+    --color-success: #4fc08a;  --color-success-ink: #4fc08a;
+    --color-warn: #e0a84e;     --color-warn-ink: #e0a84e;
+    --color-danger: #e8705f;   --color-danger-ink: #e8705f;
+    --color-sev-blocker-fg: #e8705f; --color-sev-high-fg: #e0a84e;
+    --color-sev-medium-fg: #a8ada8;  --color-sev-low-fg: #5b8def; --color-sev-nit-fg: #6e746e;
+    --color-st-none-fg: #6e746e;     --color-st-queued-fg: #5b8def;
+    --color-st-running-fg: #e0a84e;  --color-st-reported-fg: #4fc08a; --color-st-failed-fg: #e8705f;
+    --color-diff-add-bg: #10241a; --color-diff-add-fg: #6fd9a0; --color-diff-add-gutter: #173524;
+    --color-diff-del-bg: #2a1310; --color-diff-del-fg: #f09080; --color-diff-del-gutter: #3d1c18;
+    --color-diff-hunk-bg: #1c201e; --color-diff-hunk-fg: #a8ada8;
+    --color-diff-hl-bg: #15203a;   --color-diff-hl-fg: #edefed; --color-diff-hl-gutter: #1d2d52;
+    --color-rail-bg: #141715; --color-rail-hover: #1c201e; --color-rail-line: #242825;
+
+    --color-acid: #1c201e;
+    --color-acid-fg: #5b8def;
+    --color-acid-soft: #15203a;
+    --color-rail-accent: #5b8def;
+    --color-inverse-accent: #1d4ed8;
+    --color-danger-soft: #2a1310;
+    --color-success-soft: #10241a;
+    --color-diff-hl-marker: #5b8def;
+    --color-danger-fg: #0e100f;
+  }
+
+  *, ::before, ::after, ::backdrop, ::file-selector-button { border-color: var(--color-border); }
   html, body, #root { height: 100%; }
   body {
     background-color: var(--color-page);
+    background-image:
+      linear-gradient(to right, var(--grid-color) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--grid-color) 1px, transparent 1px);
+    background-size: var(--grid-size) var(--grid-size);
     color: var(--color-fg);
     font-family: var(--font-sans);
     font-size: 13px;
     line-height: 20px;
     -webkit-font-smoothing: antialiased;
   }
-  ::selection { background-color: var(--color-acid); }
+  ::selection { background-color: var(--color-highlight); }
   ::-webkit-scrollbar { width: 12px; height: 12px; }
   ::-webkit-scrollbar-track { background: var(--color-subtle); }
-  ::-webkit-scrollbar-thumb { background-color: var(--color-fg); border-radius: 0; }
-  ::-webkit-scrollbar-thumb:hover { background-color: var(--color-primary); }
+  ::-webkit-scrollbar-thumb { background-color: var(--color-border); border-radius: var(--radius-sm); }
 }
 
-/* Static stripes: a shimmer sweep reads as "soft" and fights the system. */
-@utility skeleton {
-  border: 2px solid var(--color-fg);
-  background: repeating-linear-gradient(
-    90deg,
-    var(--color-subtle-2) 0 10px,
-    var(--color-subtle) 10px 20px
-  );
+/* Every border in the app goes through these, never through `border` alone —
+   that is what lets --bw swap 2px to 1px in one place. They set the width only:
+   the colour defaults to --color-border (see the base rule below), so a colour
+   utility such as `border-rail-line` or `border-transparent` still wins. */
+@utility edge { border-width: var(--bw); border-style: solid; }
+@utility edge-t { border-top-width: var(--bw); border-top-style: solid; }
+@utility edge-b { border-bottom-width: var(--bw); border-bottom-style: solid; }
+@utility edge-r { border-right-width: var(--bw); border-right-style: solid; }
+@utility edge-l { border-left-width: var(--bw); border-left-style: solid; }
+@utility edge-soft { border: 1px solid var(--color-border-soft); }
+@utility edge-soft-t { border-top: 1px solid var(--color-border-soft); }
+@utility edge-soft-b { border-bottom: 1px solid var(--color-border-soft); }
+@utility edge-soft-r { border-right: 1px solid var(--color-border-soft); }
+/* 1px in both systems: the divider inside the terminal block, and the ring on meta dots. */
+@utility edge-term-b { border-bottom: 1px solid var(--color-term-border); }
+@utility edge-hair { border: 1px solid var(--color-border); }
+
+@utility lift { box-shadow: var(--shadow-lift); }
+@utility lift-sm { box-shadow: var(--shadow-lift-sm); }
+
+/* Brutalism presses into its own shadow; blueprint has no shadow, so the
+   transform is suppressed there and the border does the work instead. */
+@utility press {
+  transition: transform 80ms linear, box-shadow 80ms linear,
+              background-color 120ms linear, border-color 120ms linear;
+  &:hover { transform: translate(2px, 2px); box-shadow: var(--shadow-press); }
+  &:active { transform: translate(3px, 3px); box-shadow: none; }
+}
+[data-system="blueprint"] .press:hover,
+[data-system="blueprint"] .press:active { transform: none; box-shadow: none; }
+[data-system="blueprint"] .press:hover { border-color: var(--color-fg-3); }
+
+@utility label-caps {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
 }
 
-/* Focus never replaces the border — it sits outside it. */
+@utility display-title {
+  font-family: var(--font-display);
+  font-weight: var(--h1-weight);
+  letter-spacing: var(--h1-tracking);
+  text-transform: uppercase;
+  line-height: 1.04;
+}
+
 @utility focus-ring {
   &:focus-visible {
     outline: 3px solid var(--color-primary);
@@ -185,17 +431,11 @@
   }
 }
 
-/* The house gesture: a block presses into its own shadow. */
-@utility press {
-  transition: transform 80ms linear, box-shadow 80ms linear, background-color 80ms linear;
-  &:hover { transform: translate(2px, 2px); box-shadow: var(--shadow-hard-press); }
-  &:active { transform: translate(3px, 3px); box-shadow: none; }
-}
-
-/* Uppercase micro-label used for section titles, tags and eyebrow labels. */
-@utility label-caps {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+@utility skeleton {
+  border: var(--bw) solid var(--color-border);
+  background: repeating-linear-gradient(
+    90deg,
+    var(--color-subtle-2) 0 10px,
+    var(--color-subtle) 10px 20px
+  );
 }
