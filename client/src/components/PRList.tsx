@@ -1,0 +1,376 @@
+import { useMemo, useState } from "react";
+import { useMutation, useQuery } from "../hooks/useApi";
+import type { PullRequestDto, ReviewDto } from "../../../shared/types";
+import StatusBadge, { MyReviewBadge } from "./StatusBadge";
+import Button from "./ui/Button";
+import Card, { Chip } from "./ui/Card";
+import { Select } from "./ui/Field";
+import MultiSelect from "./ui/MultiSelect";
+import Icon from "./ui/Icon";
+import Avatar from "./ui/Avatar";
+import { TableSkeleton } from "./ui/Skeleton";
+import { useToast } from "./ui/Toast";
+import { formatCount, relativeTime } from "../lib/format";
+import { ShellActions, useRailCount } from "./AppShell";
+import { focusedAttr, moveFocus, useHotkeys } from "../hooks/useHotkeys";
+
+const TH = "h-10 whitespace-nowrap bg-subtle px-3 text-left label-caps text-fg-2 border-b-2 border-fg first:pl-4";
+// Row dividers are the one hairline allowed: they sit inside a bordered block.
+const TD = "h-13 whitespace-nowrap px-3 align-middle border-b border-border-soft group-last:border-b-0 first:pl-4";
+// The row is the click target; the title is the real control, so its name is the accessible name.
+// Hover fills the cells acid with no transition; keyboard focus draws a blue bar on the first cell.
+const ROW =
+  "group cursor-pointer hover:[&>td]:bg-acid has-[:focus-visible]:[&>td]:bg-acid has-[:focus-visible]:[&>td:first-child]:shadow-[inset_5px_0_0_var(--color-primary)]";
+const ROW_TITLE = "min-w-0 max-w-full truncate text-left font-medium outline-none";
+
+type PrStatus = "draft" | "approved" | "changes_requested" | "review_required";
+
+const STATUS_LABELS: Record<PrStatus, string> = {
+  draft: "Draft",
+  approved: "Approved",
+  changes_requested: "Changes requested",
+  review_required: "Review required",
+};
+
+function statusOf(pr: PullRequestDto): PrStatus {
+  if (pr.isDraft) return "draft";
+  if (pr.reviewDecision === "APPROVED") return "approved";
+  if (pr.reviewDecision === "CHANGES_REQUESTED") return "changes_requested";
+  return "review_required";
+}
+
+const REVIEW_RANK: Record<PullRequestDto["reviewStatus"], number> = {
+  none: 0,
+  queued: 1,
+  running: 2,
+  failed: 3,
+  reported: 4,
+};
+
+type SortKey = "number" | "updated" | "review";
+type SortDir = "asc" | "desc";
+
+const canStartReview = (pr: PullRequestDto) =>
+  pr.reviewStatus === "none" || pr.reviewStatus === "reported" || pr.reviewStatus === "failed";
+
+export default function PRList({
+  onSelectPR,
+}: {
+  onSelectPR: (repo: string, number: number, order: { repo: string; number: number }[]) => void;
+}) {
+  const { data: repos } = useQuery<string[]>("/api/repos");
+  const { data: viewer } = useQuery<{ login: string }>("/api/viewer", [], 5 * 60_000);
+  const [selectedRepo, setSelectedRepo] = useState<string>("");
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [refreshedAt, setRefreshedAt] = useState<string | null>(null);
+  const [authors, setAuthors] = useState<Set<string>>(new Set());
+  const [statuses, setStatuses] = useState<Set<string>>(new Set());
+  const [labels, setLabels] = useState<Set<string>>(new Set());
+  const [sortKey, setSortKey] = useState<SortKey>("number");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [startingReview, setStartingReview] = useState<string | null>(null);
+  const { toast } = useToast();
+  const startReviewMutation = useMutation<ReviewDto>("/api/reviews", "POST");
+
+  const handleStartReview = async (pr: PullRequestDto) => {
+    const key = `${pr.repo}#${pr.number}`;
+    if (startingReview === key) return;
+    setStartingReview(key);
+    try {
+      await startReviewMutation.mutate({ repo: pr.repo, number: pr.number });
+      toast({ kind: "success", message: `Review started for #${pr.number}` });
+      setRefreshKey((k) => k + 1);
+    } catch (err) {
+      toast({ kind: "error", message: `Failed to start review: ${(err as Error).message}` });
+    } finally {
+      setStartingReview(null);
+    }
+  };
+
+  const org = (repos ?? [])[0]?.split("/")[0] ?? "";
+  const repo = selectedRepo || repos?.[0] || "";
+  const isOrgView = repo.startsWith("org:");
+  const { data: prs, loading, error } = useQuery<PullRequestDto[]>(
+    repo ? `/api/prs?repo=${encodeURIComponent(repo)}&refresh=${refreshKey > 0}&_=${refreshKey}` : null,
+    [repo, refreshKey]
+  );
+  useRailCount("prs", prs?.length);
+
+  if (prs && !loading && refreshedAt === null) setRefreshedAt(new Date().toISOString());
+
+  const authorOptions = useMemo(
+    () => [...new Set((prs ?? []).map((p) => p.author))].sort().map((a) => ({ value: a, label: a })),
+    [prs]
+  );
+  const labelOptions = useMemo(
+    () => [...new Set((prs ?? []).flatMap((p) => p.labels))].sort().map((l) => ({ value: l, label: l })),
+    [prs]
+  );
+  const statusOptions = (Object.keys(STATUS_LABELS) as PrStatus[]).map((s) => ({ value: s, label: STATUS_LABELS[s] }));
+
+  const filtered = (prs ?? []).filter((p) => {
+    if (authors.size > 0 && !authors.has(p.author)) return false;
+    if (statuses.size > 0 && !statuses.has(statusOf(p))) return false;
+    if (labels.size > 0 && !p.labels.some((l) => labels.has(l))) return false;
+    return true;
+  });
+
+  const sorted = [...filtered].sort((a, b) => {
+    const diff =
+      sortKey === "number"
+        ? a.number - b.number
+        : sortKey === "updated"
+          ? new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime()
+          : REVIEW_RANK[a.reviewStatus] - REVIEW_RANK[b.reviewStatus];
+    return sortDir === "asc" ? diff : -diff;
+  });
+  const running = sorted.filter((p) => p.reviewStatus === "running").length;
+  const open = (pr: PullRequestDto) => onSelectPR(pr.repo, pr.number, sorted.map((p) => ({ repo: p.repo, number: p.number })));
+
+  useHotkeys({
+    j: () => moveFocus("[data-row-nav]", 1),
+    k: () => moveFocus("[data-row-nav]", -1),
+    r: () => {
+      const key = focusedAttr("data-pr");
+      const pr = sorted.find((p) => `${p.repo}#${p.number}` === key);
+      if (pr && canStartReview(pr)) handleStartReview(pr);
+    },
+  });
+
+  const toggleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDir("desc");
+    }
+  };
+
+  const refresh = () => {
+    setRefreshedAt(null);
+    setRefreshKey((k) => k + 1);
+  };
+
+  return (
+    <main className="flex flex-col gap-5 px-10 pb-10 pt-7">
+      <ShellActions>
+        <Button size="sm" onClick={refresh} disabled={loading}>
+          <Icon name="refresh" className={loading ? "animate-spin" : ""} />
+          Refresh
+        </Button>
+      </ShellActions>
+
+      <div className="flex items-end gap-3">
+        <div className="flex flex-col gap-1.5">
+          <h1 className="font-display text-[34px] uppercase leading-none tracking-[0.01em]">Pull requests</h1>
+          <span className="font-mono text-xs text-fg-3">
+            {loading
+              ? "Refreshing…"
+              : `${sorted.length} open${sorted.length !== (prs?.length ?? 0) ? ` of ${prs?.length ?? 0}` : ""}${running ? ` · ${running} running` : ""}${refreshedAt ? ` · refreshed ${relativeTime(refreshedAt)}` : ""}`}
+          </span>
+        </div>
+        <div className="ml-auto flex items-center gap-2">
+          <MultiSelect label="Author" options={authorOptions} selected={authors} onChange={setAuthors} wrapperClassName="w-40" />
+          <MultiSelect label="Status" options={statusOptions} selected={statuses} onChange={setStatuses} wrapperClassName="w-44" />
+          <MultiSelect label="Label" options={labelOptions} selected={labels} onChange={setLabels} wrapperClassName="w-40" />
+          <Select
+            id="repo"
+            icon="repo"
+            wrapperClassName="w-60"
+            value={repo}
+            onChange={(e) => {
+              setSelectedRepo(e.target.value);
+              setAuthors(new Set());
+              setStatuses(new Set());
+              setLabels(new Set());
+            }}
+            aria-label="Repository"
+          >
+            {org && (
+              <option value={`org:${org}`}>All repos ({org})</option>
+            )}
+            {(repos ?? []).map((r) => (
+              <option key={r} value={r}>
+                {r}
+              </option>
+            ))}
+          </Select>
+        </div>
+      </div>
+
+      {error && (
+        <div role="alert" className="flex items-center gap-3 border-2 border-fg bg-danger-soft px-3.5 py-2.5 text-fg shadow-hard">
+          <Icon name="alert" className="size-4 text-danger-ink" />
+          <span className="font-medium">Could not load pull requests</span>
+          <span className="font-mono text-xs text-danger-ink">{error}</span>
+          <Button size="sm" className="ml-auto" onClick={refresh}>
+            <Icon name="refresh" />
+            Retry
+          </Button>
+        </div>
+      )}
+
+      <Card className="overflow-hidden">
+        {loading && !prs ? (
+          <TableSkeleton rows={6} cols={5} />
+        ) : sorted.length === 0 && !loading ? (
+          <EmptyState
+            repo={isOrgView ? `All repos (${org})` : repo}
+            filtered={(prs?.length ?? 0) > 0}
+            onRefresh={refresh}
+          />
+        ) : (
+          <table className="w-full border-separate border-spacing-0 text-[13px]">
+            <thead>
+              <tr>
+                <SortableTh label="#" width="70px" active={sortKey === "number"} dir={sortDir} onClick={() => toggleSort("number")} />
+                <th className={TH}>Title</th>
+                {isOrgView && <th className={`${TH} w-[160px]`}>Repo</th>}
+                <th className={`${TH} w-[150px]`}>Author</th>
+                <th className={`${TH} w-[120px]`}>My review</th>
+                <th className={`${TH} w-[110px]`}>+ / −</th>
+                <SortableTh label="Updated" width="110px" active={sortKey === "updated"} dir={sortDir} onClick={() => toggleSort("updated")} />
+                <SortableTh label="Review" width="140px" active={sortKey === "review"} dir={sortDir} onClick={() => toggleSort("review")} />
+                <th className={`${TH} w-[170px]`}>Findings</th>
+                <th className={`${TH} w-[88px]`} />
+              </tr>
+            </thead>
+            <tbody>
+              {sorted.map((pr) => (
+                <tr
+                  key={`${pr.repo}#${pr.number}`}
+                  data-pr={`${pr.repo}#${pr.number}`}
+                  onClick={() => open(pr)}
+                  className={ROW}
+                >
+                  <td className={`${TD} font-mono text-fg-3`}>#{pr.number}</td>
+                  <td className={`${TD} max-w-0`}>
+                    <span className="flex min-w-0 items-center gap-1.5">
+                      <button
+                        type="button"
+                        data-row-nav
+                        className={ROW_TITLE}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          open(pr);
+                        }}
+                      >
+                        {pr.title}
+                      </button>
+                      {pr.isDraft && <Chip className="shrink-0">Draft</Chip>}
+                    </span>
+                  </td>
+                  {isOrgView && (
+                    <td className={`${TD} font-mono text-xs text-fg-3`}>{pr.repo.split("/")[1] ?? pr.repo}</td>
+                  )}
+                  <td className={TD}>
+                    <span className="inline-flex items-center gap-2 text-fg-3">
+                      <Avatar name={pr.author} />
+                      {pr.author}
+                    </span>
+                  </td>
+                  <td className={TD}>
+                    <MyReviewBadge state={pr.myReview} isAuthor={!!viewer && pr.author.toLowerCase() === viewer.login.toLowerCase()} />
+                  </td>
+                  <td className={`${TD} font-mono text-xs`}>
+                    <span className="text-success-ink">+{formatCount(pr.additions)}</span> <span className="text-danger-ink">−{formatCount(pr.deletions)}</span>
+                  </td>
+                  <td className={`${TD} text-fg-3`} title={new Date(pr.updatedAt).toLocaleString()}>
+                    {relativeTime(pr.updatedAt)}
+                  </td>
+                  <td className={TD}>
+                    <StatusBadge status={pr.reviewStatus} />
+                  </td>
+                  <td className={`${TD} text-xs`}>
+                    {pr.reviewStatus === "reported" ? (
+                      <span className="inline-flex items-center gap-1.5 font-mono text-fg-2">
+                        <span className="size-2 border border-fg bg-sev-medium-dot" />
+                        {pr.openFindings} open
+                        <span className="text-fg-3">·</span>
+                        <span className="size-2 border border-fg bg-st-reported-dot" />
+                        {pr.postedFindings} posted
+                      </span>
+                    ) : (
+                      <span className="text-fg-3">—</span>
+                    )}
+                  </td>
+                  <td className={`${TD} pr-3.5 text-right`}>
+                    <span className="inline-flex items-center gap-1">
+                      {canStartReview(pr) && (
+                        <Button
+                          size="sm"
+                          iconOnly
+                          aria-label={`Start review for #${pr.number}`}
+                          disabled={startingReview === `${pr.repo}#${pr.number}`}
+                          aria-keyshortcuts="R"
+                          title="Start review (R)"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleStartReview(pr);
+                          }}
+                          className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+                        >
+                          <Icon name="play" className="size-3.5" />
+                        </Button>
+                      )}
+                      <Icon name="chevronRight" className="inline size-4 text-fg-3 group-hover:text-fg" />
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </Card>
+    </main>
+  );
+}
+
+function SortableTh({
+  label,
+  width,
+  active,
+  dir,
+  onClick,
+}: {
+  label: string;
+  width: string;
+  active: boolean;
+  dir: SortDir;
+  onClick: () => void;
+}) {
+  return (
+    <th className={TH} style={{ width }} aria-sort={active ? (dir === "asc" ? "ascending" : "descending") : "none"}>
+      <button type="button" onClick={onClick} className="inline-flex items-center gap-1 label-caps hover:bg-acid hover:text-fg focus-ring">
+        {label}
+        <Icon name={dir === "asc" ? "chevronUp" : "chevronDown"} className={`size-3 ${active ? "" : "invisible"}`} />
+      </button>
+    </th>
+  );
+}
+
+function EmptyState({ repo, filtered, onRefresh }: { repo: string; filtered: boolean; onRefresh: () => void }) {
+  return (
+    <div className="flex min-h-[360px] flex-col items-center justify-center gap-3 p-10 text-center [background:repeating-linear-gradient(0deg,transparent_0_43px,var(--color-subtle)_43px_44px),var(--color-surface)]">
+      <div className="inline-flex size-12 items-center justify-center border-2 border-fg bg-acid text-fg shadow-hard-sm">
+        <Icon name="inbox" className="size-5" />
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <span className="font-display text-[22px] uppercase leading-none">{filtered ? "No matching pull requests" : "No open pull requests"}</span>
+        <span className="max-w-[380px] text-fg-2">
+          {filtered ? (
+            "No pull requests match the current filters. Try clearing one."
+          ) : (
+            <>
+              <span className="font-mono">{repo}</span> has nothing waiting for review. Pick another repository or refresh.
+            </>
+          )}
+        </span>
+      </div>
+      <Button variant="acid" className="mt-1" onClick={onRefresh}>
+        <Icon name="refresh" />
+        Refresh
+      </Button>
+    </div>
+  );
+}

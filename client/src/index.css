@@ -1,0 +1,201 @@
+/* Neo-brutalist theme — drop-in replacement for client/src/index.css.
+   Token NAMES are unchanged wherever possible so most components keep working;
+   what changes is values, radii (all 0), shadows (hard offsets) and border width (2px).
+   Design canvas: see docs/redesign/README.md */
+
+@import url("https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap");
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Archivo", "Helvetica Neue", Helvetica, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+  --font-display: "Anton", "Archivo", Impact, sans-serif;
+
+  /* Ground */
+  --color-page: #ede9e0;
+  --color-surface: #ffffff;
+  --color-subtle: #e2ddd2;
+  --color-subtle-2: #d6d0c2;
+
+  /* Structure. There is no hairline any more: borders are 2px ink, or nothing.
+     --color-border-soft is the ONLY exception: rules *inside* a bordered block. */
+  --color-border: #0f0e0c;
+  --color-border-strong: #0f0e0c;
+  --color-border-soft: #c9c3b6;
+
+  /* Ink. The old 5-step grey ramp collapses to three: content, secondary, meta. */
+  --color-fg: #0f0e0c;
+  --color-fg-2: #3c3931;
+  --color-fg-3: #6b675c;
+  --color-muted: #6b675c;
+  --color-faint: #6b675c;
+
+  /* Accents. Blue is the only fill that takes white text. */
+  --color-primary: #2b3ff0;
+  --color-primary-hover: #1b2bc4;
+  --color-primary-soft: #dcf23c;      /* selected rows are acid, not a blue tint */
+  --color-primary-soft-2: #dcf23c;
+  --color-primary-ring: #2b3ff0;
+  --color-acid: #dcf23c;
+  --color-acid-soft: #f6fbd4;
+
+  --color-danger: #ff5a1f;            /* fill */
+  --color-danger-ink: #c23a08;        /* danger text on light ground */
+  --color-danger-soft: #ffe8e0;
+  --color-danger-border: #0f0e0c;
+  --color-success: #00a85a;           /* fill */
+  --color-success-ink: #00733e;       /* additions, success text */
+  --color-success-soft: #cff5df;
+
+  /* Severity: bg is the fill, fg is the label on it. Runs hot to cold. */
+  --color-sev-blocker: #0f0e0c;
+  --color-sev-blocker-bg: #ff4d2d;
+  --color-sev-high: #0f0e0c;
+  --color-sev-high-bg: #ff9e1f;
+  --color-sev-medium: #0f0e0c;
+  --color-sev-medium-bg: #dcf23c;
+  --color-sev-low: #0f0e0c;
+  --color-sev-low-bg: #7cc8ff;
+  --color-sev-nit: #3c3931;
+  --color-sev-nit-bg: #ffffff;
+
+  /* Legacy dot tokens: the badges no longer draw dots, but the names are kept
+     (PRList / LocalBranches meta dots still read them). Same value as the fill. */
+  --color-sev-blocker-dot: #ff4d2d;
+  --color-sev-high-dot: #ff9e1f;
+  --color-sev-medium-dot: #dcf23c;
+  --color-sev-low-dot: #7cc8ff;
+  --color-sev-nit-dot: #ffffff;
+
+  /* Review status. No dot, no ping — the fill is the signal. */
+  --color-st-none: #0f0e0c;
+  --color-st-none-bg: #ffffff;
+  --color-st-queued: #ffffff;
+  --color-st-queued-bg: #2b3ff0;
+  --color-st-running: #0f0e0c;
+  --color-st-running-bg: #dcf23c;
+  --color-st-reported: #0f0e0c;
+  --color-st-reported-bg: #00a85a;
+  --color-st-failed: #0f0e0c;
+  --color-st-failed-bg: #ff5a1f;
+  --color-st-none-dot: #ffffff;
+  --color-st-queued-dot: #2b3ff0;
+  --color-st-running-dot: #dcf23c;
+  --color-st-reported-dot: #00a85a;
+  --color-st-failed-dot: #ff5a1f;
+
+  /* Diff */
+  --color-diff-add-bg: #cff5df;
+  --color-diff-add-fg: #00542c;
+  --color-diff-add-gutter: #a8e8c4;
+  --color-diff-add-ln: #00542c;
+  --color-diff-del-bg: #ffe0d6;
+  --color-diff-del-fg: #8f2d0c;
+  --color-diff-del-gutter: #ffc2ae;
+  --color-diff-del-ln: #8f2d0c;
+  --color-diff-hunk-bg: #0f0e0c;
+  --color-diff-hunk-fg: #dcf23c;
+  --color-diff-hl-bg: #dcf23c;
+  --color-diff-hl-gutter: #c2d71f;
+  --color-diff-hl-fg: #0f0e0c;
+  --color-diff-hl-ln: #0f0e0c;
+  --color-diff-hl-marker: #0f0e0c;
+
+  /* Thread / terminal */
+  --color-term-bg: #0f0e0c;
+  --color-term-border: #46443c;
+  --color-term-fg: #ede9e0;
+  --color-term-head: #ede9e0;
+  --color-term-muted: #aba69a;
+  --color-term-tool: #dcf23c;
+  --color-term-line: #6b675c;
+
+  /* Rail (new) */
+  --color-rail-bg: #0f0e0c;
+  --color-rail-fg: #aba69a;
+  --color-rail-hover: #26251f;
+  --color-rail-line: #57544c;
+
+  /* Radius is 0 with no exceptions, including avatars and checkboxes.
+     The scale is kept so existing rounded-* classes compile to nothing. */
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+
+  /* Shadows are never blurred and never tinted: ink, offset down-right. */
+  --shadow-hard: 5px 5px 0 #0f0e0c;
+  --shadow-hard-sm: 3px 3px 0 #0f0e0c;
+  --shadow-hard-press: 1px 1px 0 #0f0e0c;
+  --shadow-xs: none;
+  --shadow-sm: 3px 3px 0 #0f0e0c;
+  --shadow-md: 5px 5px 0 #0f0e0c;
+  --shadow-lg: 5px 5px 0 #0f0e0c;
+  --shadow-ring: none;          /* focus is an outline now, see the focus-ring utility */
+  --shadow-ring-danger: none;
+
+  /* Nothing eases. Every transition is linear and under 120ms. */
+  --ease-out-soft: linear;
+  --default-transition-timing-function: linear;
+
+  --animate-view-enter: none;
+  --animate-toast-enter: toast-enter 120ms linear both;
+  --animate-panel-enter: none;
+  --animate-ping-dot: none;     /* the running dot is gone; the acid block is the signal */
+  --animate-shimmer: none;      /* skeletons are static stripes */
+
+  @keyframes toast-enter {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+
+@layer base {
+  html, body, #root { height: 100%; }
+  body {
+    background-color: var(--color-page);
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    line-height: 20px;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background-color: var(--color-acid); }
+  ::-webkit-scrollbar { width: 12px; height: 12px; }
+  ::-webkit-scrollbar-track { background: var(--color-subtle); }
+  ::-webkit-scrollbar-thumb { background-color: var(--color-fg); border-radius: 0; }
+  ::-webkit-scrollbar-thumb:hover { background-color: var(--color-primary); }
+}
+
+/* Static stripes: a shimmer sweep reads as "soft" and fights the system. */
+@utility skeleton {
+  border: 2px solid var(--color-fg);
+  background: repeating-linear-gradient(
+    90deg,
+    var(--color-subtle-2) 0 10px,
+    var(--color-subtle) 10px 20px
+  );
+}
+
+/* Focus never replaces the border — it sits outside it. */
+@utility focus-ring {
+  &:focus-visible {
+    outline: 3px solid var(--color-primary);
+    outline-offset: 3px;
+  }
+}
+
+/* The house gesture: a block presses into its own shadow. */
+@utility press {
+  transition: transform 80ms linear, box-shadow 80ms linear, background-color 80ms linear;
+  &:hover { transform: translate(2px, 2px); box-shadow: var(--shadow-hard-press); }
+  &:active { transform: translate(3px, 3px); box-shadow: none; }
+}
+
+/* Uppercase micro-label used for section titles, tags and eyebrow labels. */
+@utility label-caps {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}

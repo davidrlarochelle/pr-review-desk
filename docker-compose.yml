@@ -1,0 +1,16 @@
+services:
+  app:
+    build: .
+    ports:
+      - "37703:3100"
+    volumes:
+      - ./data:/app/data                                          # SQLite persistence
+      - ${HOME}/Documents/projets:/repos:ro                       # local checkouts, for reviewing branches pre-PR
+    environment:
+      - PORT=3100
+      - REPOS=Villeco-inc/villeco,Villeco-inc/linea-web,Villeco-inc/linea-mobile,Villeco-inc/linea-geo-api
+      - LOCAL_REPOS=villeco=Linea/linea-cortex/villeco,linea-web=Linea/linea-cortex/linea-web,linea-mobile=Linea/linea-cortex/linea-mobile,linea-geo-api=Linea/linea-cortex/linea-geo-api
+      - NODE_ENV=production
+      - GH_TOKEN=${GH_TOKEN}                                   # gh auth token from host keychain
+      - CLAUDE_CODE_OAUTH_TOKEN=${CLAUDE_CODE_OAUTH_TOKEN}     # long-lived token from `claude setup-token`
+    restart: unless-stopped
