@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "../hooks/useApi";
 import { useSSE } from "../hooks/useSSE";
 import type { FindingDto, ReviewDto } from "../../../shared/types";
@@ -35,6 +35,9 @@ import { formatCount, relativeTime } from "../lib/format";
 import { ShellActions } from "./AppShell";
 import Pager from "./ui/Pager";
 import { focusedAttr, useHotkeys } from "../hooks/useHotkeys";
+import { LAUNCH_DEFAULTS, LAUNCH_KEY, useStoredState } from "../lib/storage";
+import { loadPrOrder } from "../lib/url-state";
+import NotFound from "./ui/NotFound";
 
 interface ReviewWithFindings extends ReviewDto {
   findings: FindingDto[];
@@ -46,27 +49,32 @@ const SEVERITIES = ["blocker", "high", "medium", "low", "nit"] as const;
 export default function PRDetail({
   repo,
   number,
-  order,
   onSelectPR,
   onBack,
   onSelectFinding,
 }: {
   repo: string;
   number: number;
-  /** The PR list in the order the user saw it; drives the pager. */
-  order: { repo: string; number: number }[];
   onSelectPR: (repo: string, number: number) => void;
   onBack: () => void;
   onSelectFinding: (id: string) => void;
 }) {
-  const [skillsInput, setSkillsInput] = useState("");
-  const [model, setModel] = useState("sonnet");
-  const [effort, setEffort] = useState("standard");
-  const [showThread, setShowThread] = useState(false);
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [launch, setLaunch] = useStoredState("local", LAUNCH_KEY, LAUNCH_DEFAULTS);
+  const { model, effort, skills: skillsInput } = launch;
+  const setModel = (model: string) => setLaunch((l) => ({ ...l, model }));
+  const setEffort = (effort: string) => setLaunch((l) => ({ ...l, effort }));
+  const setSkillsInput = (skills: string) => setLaunch((l) => ({ ...l, skills }));
+  // What this screen was showing survives a refresh, in this tab only.
+  const [view, setView] = useStoredState("session", `prd:view:pr:${repo}#${number}`, { thread: false, selected: [] as string[] });
+  const showThread = view.thread;
+  const setShowThread = (thread: boolean) => setView((v) => ({ ...v, thread }));
+  const selected = useMemo(() => new Set(view.selected), [view.selected]);
+  const setSelected = (update: (prev: Set<string>) => Set<string>) => setView((v) => ({ ...v, selected: [...update(new Set(v.selected))] }));
+  // The PR list in the order the user saw it, taken when they clicked; drives the pager.
+  const [order] = useState(loadPrOrder);
   const { toast } = useToast();
 
-  const { data: prData } = useQuery<PrSnapshotResponse>(`/api/prs/${repo}/${number}`);
+  const { data: prData, error: prError } = useQuery<PrSnapshotResponse>(`/api/prs/${repo}/${number}`);
   const pr = useMemo(() => {
     if (!prData?.snapshot) return null;
     const s = prData.snapshot;
@@ -128,6 +136,14 @@ export default function PRDetail({
   }, [sortedFindings]);
   const openCount = sortedFindings.filter((f) => f.state === "open").length;
 
+  // A checked finding that was posted, dismissed or removed since is dropped from the selection.
+  useEffect(() => {
+    if (!review) return;
+    const open = new Set(sortedFindings.filter((f) => f.state === "open").map((f) => f.id));
+    if (view.selected.some((id) => !open.has(id))) setSelected((prev) => new Set([...prev].filter((id) => open.has(id))));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [review, sortedFindings]);
+
   const toggleSelected = (id: string) => {
     setSelected((prev) => {
       const next = new Set(prev);
@@ -148,7 +164,7 @@ export default function PRDetail({
         failed++;
       }
     }
-    setSelected(new Set());
+    setSelected(() => new Set());
     refetchReview();
     if (posted) toast({ kind: "success", message: `Posted ${posted} comment${posted > 1 ? "s" : ""} on #${number}`, link: { href: githubUrl, label: "View" } });
     if (failed) toast({ kind: "error", message: `${failed} comment${failed > 1 ? "s" : ""} failed to post` });
@@ -176,6 +192,10 @@ export default function PRDetail({
     p: () => selected.size > 0 && !postFinding.loading && handlePostSelected(),
     Escape: onBack,
   });
+
+  if (prError && !prData) {
+    return <NotFound title="Pull request not found" detail={`${repo} #${number}: ${prError}`} backLabel="Back to pull requests" onBack={onBack} />;
+  }
 
   return (
     <main className="flex flex-col gap-4 px-10 pb-10 pt-5">

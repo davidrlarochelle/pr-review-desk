@@ -1,5 +1,7 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 import { useQuery } from "../hooks/useApi";
+import { useStoredState } from "../lib/storage";
+import NotFound from "./ui/NotFound";
 import { useSSE } from "../hooks/useSSE";
 import type { FindingDto, ReviewDto } from "../../../shared/types";
 import SeverityBadge from "./SeverityBadge";
@@ -37,11 +39,15 @@ export default function LocalReviewDetail({
   onBack: () => void;
   onSelectFinding: (id: string) => void;
 }) {
-  const [showThread, setShowThread] = useState(false);
+  // The open thread survives a refresh, in this tab only.
+  const [view, setView] = useStoredState("session", `prd:view:local:${repo}#${number}`, { thread: false });
+  const showThread = view.thread;
+  const setShowThread = (thread: boolean) => setView({ thread });
   const { toast } = useToast();
 
   const {
     data: reviewData,
+    error: reviewError,
     loading: reviewLoading,
     refetch: refetchReview,
   } = useQuery<{ review: ReviewDto; findings: FindingDto[] }>(`/api/reviews/${repo}/${number}`, [repo, number]);
@@ -105,6 +111,10 @@ export default function LocalReviewDetail({
   };
 
   useHotkeys({ Escape: onBack });
+
+  if (reviewError && !reviewData) {
+    return <NotFound title="Local review not found" detail={`${repoLabel} · ${branch}: ${reviewError}`} backLabel="All branches" onBack={onBack} />;
+  }
 
   return (
     <main className="flex flex-col gap-4 px-10 pb-10 pt-5">

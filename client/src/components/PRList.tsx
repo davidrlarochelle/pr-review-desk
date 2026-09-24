@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "../hooks/useApi";
 import type { PullRequestDto, ReviewDto } from "../../../shared/types";
 import StatusBadge, { MyReviewBadge } from "./StatusBadge";
@@ -13,6 +13,7 @@ import { useToast } from "./ui/Toast";
 import { formatCount, relativeTime } from "../lib/format";
 import { ShellActions, useRailCount } from "./AppShell";
 import { focusedAttr, moveFocus, useHotkeys } from "../hooks/useHotkeys";
+import { savePrOrder, type PrListSearch, type SortKey, type SortDir } from "../lib/url-state";
 
 const TH = "h-10 whitespace-nowrap bg-subtle px-3 text-left label-caps text-fg-2 edge-b first:pl-4";
 // Row dividers are the one hairline allowed: they sit inside a bordered block.
@@ -47,27 +48,32 @@ const REVIEW_RANK: Record<PullRequestDto["reviewStatus"], number> = {
   reported: 4,
 };
 
-type SortKey = "number" | "updated" | "review";
-type SortDir = "asc" | "desc";
-
 const canStartReview = (pr: PullRequestDto) =>
   pr.reviewStatus === "none" || pr.reviewStatus === "reported" || pr.reviewStatus === "failed";
 
 export default function PRList({
+  search,
+  onSearchChange,
+  onRepoChange,
   onSelectPR,
 }: {
-  onSelectPR: (repo: string, number: number, order: { repo: string; number: number }[]) => void;
+  /** Filters and sort come from the URL; every change goes back through onSearchChange. */
+  search: PrListSearch;
+  onSearchChange: (next: PrListSearch) => void;
+  /** Switching repo restores that repo's own remembered filters. */
+  onRepoChange: (repo: string) => void;
+  onSelectPR: (repo: string, number: number) => void;
 }) {
   const { data: repos } = useQuery<string[]>("/api/repos");
   const { data: viewer } = useQuery<{ login: string }>("/api/viewer", [], 5 * 60_000);
-  const [selectedRepo, setSelectedRepo] = useState<string>("");
   const [refreshKey, setRefreshKey] = useState(0);
   const [refreshedAt, setRefreshedAt] = useState<string | null>(null);
-  const [authors, setAuthors] = useState<Set<string>>(new Set());
-  const [statuses, setStatuses] = useState<Set<string>>(new Set());
-  const [labels, setLabels] = useState<Set<string>>(new Set());
-  const [sortKey, setSortKey] = useState<SortKey>("number");
-  const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const authors = useMemo(() => new Set(search.author ?? []), [search.author]);
+  const statuses = useMemo(() => new Set(search.status ?? []), [search.status]);
+  const labels = useMemo(() => new Set(search.label ?? []), [search.label]);
+  const sortKey: SortKey = search.sort ?? "number";
+  const sortDir: SortDir = search.dir ?? "desc";
+  const setFilter = (key: "author" | "status" | "label") => (next: Set<string>) => onSearchChange({ ...search, [key]: [...next] });
   const [startingReview, setStartingReview] = useState<string | null>(null);
   const { toast } = useToast();
   const startReviewMutation = useMutation<ReviewDto>("/api/reviews", "POST");
@@ -88,12 +94,26 @@ export default function PRList({
   };
 
   const org = (repos ?? [])[0]?.split("/")[0] ?? "";
-  const repo = selectedRepo || repos?.[0] || "";
+  const knownRepo = (r: string | undefined) => !!r && (r === `org:${org}` || (repos ?? []).includes(r));
+  const repo = repos ? (knownRepo(search.repo) ? search.repo! : repos[0] ?? "") : search.repo ?? "";
   const isOrgView = repo.startsWith("org:");
-  const { data: prs, loading, error } = useQuery<PullRequestDto[]>(
-    repo ? `/api/prs?repo=${encodeURIComponent(repo)}&refresh=${refreshKey > 0}&_=${refreshKey}` : null,
+
+  // Write the effective repo into the URL once the repo list is known. A remembered repo that is
+  // no longer configured is dropped silently, and its replacement brings its own filters.
+  useEffect(() => {
+    if (!repos || !repo || search.repo === repo) return;
+    if (search.repo === undefined) onSearchChange({ ...search, repo });
+    else onRepoChange(repo);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [repos, repo, search.repo]);
+
+  const prsKey = repo ? `/api/prs?repo=${encodeURIComponent(repo)}&refresh=${refreshKey > 0}` : null;
+  const { data: prs, dataKey, loading, error } = useQuery<PullRequestDto[]>(
+    prsKey ? `${prsKey}&_=${refreshKey}` : null,
     [repo, refreshKey]
   );
+  // Right after a repo switch the previous repo's rows are still in hand for a frame.
+  const prsAreCurrent = !!prs && !loading && dataKey === prsKey;
   useRailCount("prs", prs?.length);
 
   if (prs && !loading && refreshedAt === null) setRefreshedAt(new Date().toISOString());
@@ -107,6 +127,20 @@ export default function PRList({
     [prs]
   );
   const statusOptions = (Object.keys(STATUS_LABELS) as PrStatus[]).map((s) => ({ value: s, label: STATUS_LABELS[s] }));
+
+  // A remembered author or label with no open pull request left would empty the list for no
+  // visible reason: drop it, keep the rest of the selection.
+  useEffect(() => {
+    if (!prsAreCurrent) return;
+    const keep = (selected: string[] | undefined, options: { value: string }[]) =>
+      selected?.filter((v) => options.some((o) => o.value === v));
+    const author = keep(search.author, authorOptions);
+    const label = keep(search.label, labelOptions);
+    if (author?.length !== search.author?.length || label?.length !== search.label?.length) {
+      onSearchChange({ ...search, author, label });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prsAreCurrent, authorOptions, labelOptions]);
 
   const filtered = (prs ?? []).filter((p) => {
     if (authors.size > 0 && !authors.has(p.author)) return false;
@@ -125,7 +159,11 @@ export default function PRList({
     return sortDir === "asc" ? diff : -diff;
   });
   const running = sorted.filter((p) => p.reviewStatus === "running").length;
-  const open = (pr: PullRequestDto) => onSelectPR(pr.repo, pr.number, sorted.map((p) => ({ repo: p.repo, number: p.number })));
+  const open = (pr: PullRequestDto) => {
+    // The pager walks exactly the list the user was looking at, so its order is taken now.
+    savePrOrder(sorted.map((p) => ({ repo: p.repo, number: p.number })));
+    onSelectPR(pr.repo, pr.number);
+  };
 
   useHotkeys({
     j: () => moveFocus("[data-row-nav]", 1),
@@ -138,12 +176,7 @@ export default function PRList({
   });
 
   const toggleSort = (key: SortKey) => {
-    if (sortKey === key) {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    } else {
-      setSortKey(key);
-      setSortDir("desc");
-    }
+    onSearchChange({ ...search, sort: key, dir: sortKey === key && sortDir === "desc" ? "asc" : "desc" });
   };
 
   const refresh = () => {
@@ -170,20 +203,15 @@ export default function PRList({
           </span>
         </div>
         <div className="ml-auto flex items-center gap-2">
-          <MultiSelect label="Author" options={authorOptions} selected={authors} onChange={setAuthors} wrapperClassName="w-40" />
-          <MultiSelect label="Status" options={statusOptions} selected={statuses} onChange={setStatuses} wrapperClassName="w-44" />
-          <MultiSelect label="Label" options={labelOptions} selected={labels} onChange={setLabels} wrapperClassName="w-40" />
+          <MultiSelect label="Author" options={authorOptions} selected={authors} onChange={setFilter("author")} wrapperClassName="w-40" />
+          <MultiSelect label="Status" options={statusOptions} selected={statuses} onChange={setFilter("status")} wrapperClassName="w-44" />
+          <MultiSelect label="Label" options={labelOptions} selected={labels} onChange={setFilter("label")} wrapperClassName="w-40" />
           <Select
             id="repo"
             icon="repo"
             wrapperClassName="w-60"
             value={repo}
-            onChange={(e) => {
-              setSelectedRepo(e.target.value);
-              setAuthors(new Set());
-              setStatuses(new Set());
-              setLabels(new Set());
-            }}
+            onChange={(e) => onRepoChange(e.target.value)}
             aria-label="Repository"
           >
             {org && (

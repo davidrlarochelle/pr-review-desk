@@ -3,6 +3,8 @@ import { fetchJson } from "../lib/api";
 
 interface QueryState<T> {
   data: T | null;
+  /** Cache key of the request that produced `data`, so callers can tell stale data from current. */
+  dataKey: string | null;
   loading: boolean;
   error: string | null;
 }
@@ -26,6 +28,7 @@ export function useQuery<T>(url: string | null, deps: unknown[] = [], staleMs = 
 
   const [state, setState] = useState<QueryState<T>>({
     data: (cached?.data as T) ?? null,
+    dataKey: cached ? key : null,
     loading: url !== null && !cached,
     error: null,
   });
@@ -40,7 +43,7 @@ export function useQuery<T>(url: string | null, deps: unknown[] = [], staleMs = 
         if (requestId.current === id) {
           const k = cacheKey(url);
           queryCache.set(k, { data, ts: Date.now() });
-          setState({ data, loading: false, error: null });
+          setState({ data, dataKey: k, loading: false, error: null });
         }
       })
       .catch((err: Error) => {
@@ -51,7 +54,7 @@ export function useQuery<T>(url: string | null, deps: unknown[] = [], staleMs = 
 
   useEffect(() => {
     if (cached && Date.now() - cached.ts < staleMs) {
-      setState({ data: cached.data as T, loading: false, error: null });
+      setState({ data: cached.data as T, dataKey: key, loading: false, error: null });
       return;
     }
     refetch();

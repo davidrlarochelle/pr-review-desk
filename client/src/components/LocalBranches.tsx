@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useMutation, useQuery } from "../hooks/useApi";
 import type { LocalReviewDto, ReviewDto } from "../../../shared/types";
 import StatusBadge from "./StatusBadge";
@@ -12,6 +12,9 @@ import { useToast } from "./ui/Toast";
 import { relativeTime } from "../lib/format";
 import { ShellActions, useRailCount } from "./AppShell";
 import { moveFocus, useHotkeys } from "../hooks/useHotkeys";
+import { LAUNCH_DEFAULTS, LAUNCH_KEY, useStoredState } from "../lib/storage";
+import type { LocalSearch } from "../lib/url-state";
+import NotFound from "./ui/NotFound";
 
 interface LocalRepo {
   label: string;
@@ -37,29 +40,55 @@ function branchFromRepoId(repoId: string): string {
 }
 
 export default function LocalBranches({
-  initialRepo,
-  initialBranch,
+  label,
+  search,
+  onRepoChange,
+  onSelectionChange,
+  onRemember,
+  onForgetRepo,
   onSelectReview,
 }: {
-  /** Preselection when arriving from the ⌘K palette. */
-  initialRepo?: string;
-  initialBranch?: string;
+  /** The repo from the path; undefined on bare `/local`, which settles on the first repo. */
+  label?: string;
+  /** Branch and base from the query. */
+  search: LocalSearch;
+  onRepoChange: (label: string) => void;
+  onSelectionChange: (next: LocalSearch) => void;
+  /** Called with every settled selection of a configured repo, for the next bare `/local`. */
+  onRemember: (label: string, selection: LocalSearch) => void;
+  /** Called when the path names a repo that is not configured, before offering the way back. */
+  onForgetRepo: (label: string) => void;
   onSelectReview: (args: { repo: string; number: number; repoLabel: string; branch: string; base: string }) => void;
 }) {
   const { data: repos } = useQuery<LocalRepo[]>("/api/local/repos");
-  const [repoLabel, setRepoLabel] = useState(initialRepo ?? "");
-  const [branch, setBranch] = useState(initialBranch ?? "");
-  const [base, setBase] = useState("");
-  const [model, setModel] = useState("sonnet");
-  const [effort, setEffort] = useState("standard");
-  const [skillsInput, setSkillsInput] = useState("");
+  const branch = search.branch ?? "";
+  const base = search.base ?? "";
+  const setBranch = (b: string) => onSelectionChange({ ...search, branch: b });
+  const setBase = (b: string) => onSelectionChange({ ...search, base: b });
+  const [launch, setLaunch] = useStoredState("local", LAUNCH_KEY, LAUNCH_DEFAULTS);
+  const { model, effort, skills: skillsInput } = launch;
+  const setModel = (model: string) => setLaunch((l) => ({ ...l, model }));
+  const setEffort = (effort: string) => setLaunch((l) => ({ ...l, effort }));
+  const setSkillsInput = (skills: string) => setLaunch((l) => ({ ...l, skills }));
   const { toast } = useToast();
 
-  const repo = repoLabel || repos?.[0]?.label || "";
+  const unknownRepo = !!label && !!repos && !repos.some((r) => r.label === label);
+  const repo = unknownRepo ? "" : label || repos?.[0]?.label || "";
 
   useEffect(() => {
-    if (!repoLabel && repos && repos.length > 0) setRepoLabel(repos[0].label);
-  }, [repos, repoLabel]);
+    if (!label && repo) onRepoChange(repo);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [label, repo]);
+
+  useEffect(() => {
+    if (label && repos && !unknownRepo) onRemember(label, search);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [label, repos, unknownRepo, search.branch, search.base]);
+
+  useEffect(() => {
+    if (unknownRepo && label) onForgetRepo(label);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [unknownRepo, label]);
 
   const { data: branchData, loading: branchesLoading } = useQuery<{ branches: LocalBranch[]; defaultBase: string }>(
     repo ? `/api/local/branches?repo=${encodeURIComponent(repo)}` : null,
@@ -67,15 +96,13 @@ export default function LocalBranches({
   );
   useRailCount("local", branchData?.branches.length);
 
+  // A remembered branch or base that no longer exists falls back silently to the defaults.
   useEffect(() => {
     if (!branchData) return;
-    if (!branch || !branchData.branches.some((b) => b.name === branch)) {
-      const current = branchData.branches.find((b) => b.current);
-      setBranch(current?.name ?? branchData.branches[0]?.name ?? "");
-    }
-    if (!base || !branchData.branches.some((b) => b.name === base)) {
-      setBase(branchData.defaultBase);
-    }
+    const exists = (name: string) => branchData.branches.some((b) => b.name === name);
+    const nextBranch = branch && exists(branch) ? branch : branchData.branches.find((b) => b.current)?.name ?? branchData.branches[0]?.name ?? "";
+    const nextBase = base && exists(base) ? base : branchData.defaultBase;
+    if (nextBranch !== branch || nextBase !== base) onSelectionChange({ branch: nextBranch, base: nextBase });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [branchData]);
 
@@ -116,6 +143,17 @@ export default function LocalBranches({
     r: () => canStart && handleStart(),
   });
 
+  if (unknownRepo) {
+    return (
+      <NotFound
+        title="Local repository not found"
+        detail={`"${label}" is not one of the configured local repositories.`}
+        backLabel="All local branches"
+        onBack={() => onRepoChange(repos?.[0]?.label ?? "")}
+      />
+    );
+  }
+
   return (
     <main className="flex flex-col gap-5 px-10 pb-10 pt-7">
       <ShellActions>
@@ -132,7 +170,7 @@ export default function LocalBranches({
 
       <Card className="flex flex-col">
         <div className="flex flex-wrap items-center gap-2 edge-b px-5 py-3.5">
-          <Select id="local-repo" icon="repo" wrapperClassName="w-56" value={repo} onChange={(e) => { setRepoLabel(e.target.value); setBranch(""); setBase(""); }}>
+          <Select id="local-repo" icon="repo" wrapperClassName="w-56" value={repo} onChange={(e) => onRepoChange(e.target.value)}>
             {(repos ?? []).map((r) => (
               <option key={r.label} value={r.label}>
                 {r.label}

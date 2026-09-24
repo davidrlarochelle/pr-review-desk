@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import App from "./App";
+import { RouterProvider } from "@tanstack/react-router";
+import { router } from "./router";
 import { SystemProvider } from "./components/SystemProvider";
 import "./index.css";
 
@@ -10,7 +11,7 @@ if (!container) throw new Error("Root element not found");
 createRoot(container).render(
   <StrictMode>
     <SystemProvider>
-      <App />
+      <RouterProvider router={router} />
     </SystemProvider>
   </StrictMode>
 );

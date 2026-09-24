@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "../hooks/useApi";
+import NotFound from "./ui/NotFound";
 import type { FindingDto, ReviewDto } from "../../../shared/types";
 import SeverityBadge from "./SeverityBadge";
 import { FindingStateBadge } from "./StatusBadge";
@@ -46,7 +47,7 @@ export default function FindingDetail({
   onSelectFinding?: (id: string) => void;
   readOnly?: boolean;
 }) {
-  const { data: review, refetch: refetchReview } = useQuery<ReviewWithFindings>(`/api/reviews/${repo}/${number}`);
+  const { data: review, error: reviewError, refetch: refetchReview } = useQuery<ReviewWithFindings>(`/api/reviews/${repo}/${number}`);
   const { toast } = useToast();
 
   const sorted = useMemo(
@@ -83,6 +84,10 @@ export default function FindingDetail({
   const goPrev = prev && onSelectFinding ? () => onSelectFinding(prev.id) : undefined;
   const goNext = next && onSelectFinding ? () => onSelectFinding(next.id) : undefined;
   useHotkeys({ j: goNext, k: goPrev, Escape: onBack });
+
+  if (!finding && (review || reviewError)) {
+    return <NotFound title="Finding not found" detail={reviewError ?? "It is not part of this review any more."} backLabel="All findings" onBack={onBack} />;
+  }
 
   if (!finding) {
     return (
