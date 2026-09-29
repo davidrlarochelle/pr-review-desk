@@ -7,10 +7,12 @@ import { prsRouter } from "./routes/prs";
 import { reviewsRouter } from "./routes/reviews";
 import { findingsRouter } from "./routes/findings";
 import { localRouter } from "./routes/local";
+import { failInterruptedRuns } from "./services/run-log";
 
 const db = getDb();
 const stuck = db.prepare("UPDATE reviews SET status = 'failed', error = 'Server restarted during review' WHERE status IN ('running', 'queued')").run();
 if (stuck.changes > 0) console.log(`[startup] reset ${stuck.changes} stuck review(s) to failed`);
+failInterruptedRuns();
 
 const app = express();
 const port = Number(process.env.PORT ?? 3100);

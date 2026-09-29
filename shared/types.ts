@@ -156,3 +156,57 @@ export interface ReviewEvent {
   reviewId: string;
   data: unknown;
 }
+
+/** One execution of the review agent. A review keeps every run; the latest one produced its findings. */
+export interface ReviewRunRow {
+  id: string;
+  review_id: string;
+  status: string;
+  model: string | null;
+  effort: string | null;
+  max_turns: number | null;
+  skills: string;
+  prompt_chars: number;
+  session_id: string | null;
+  num_turns: number | null;
+  duration_ms: number | null;
+  cost_usd: number | null;
+  input_tokens: number | null;
+  output_tokens: number | null;
+  cache_read_tokens: number | null;
+  cache_creation_tokens: number | null;
+  error: string | null;
+  started_at: string;
+  finished_at: string | null;
+}
+
+export interface ReviewRunDto {
+  id: string;
+  reviewId: string;
+  status: "running" | "reported" | "failed";
+  model: string | null;
+  effort: string | null;
+  maxTurns: number | null;
+  skills: string[];
+  promptChars: number;
+  sessionId: string | null;
+  numTurns: number | null;
+  durationMs: number | null;
+  costUsd: number | null;
+  inputTokens: number | null;
+  outputTokens: number | null;
+  cacheReadTokens: number | null;
+  cacheCreationTokens: number | null;
+  error: string | null;
+  startedAt: string;
+  finishedAt: string | null;
+}
+
+/** A run with everything the agent saw and said: the prompt, every stream-json event, stderr. */
+export interface RunSessionDto {
+  run: ReviewRunDto;
+  prompt: string;
+  /** The raw `claude -p --output-format stream-json` events, in order, unmodified. */
+  events: unknown[];
+  stderr: string;
+}

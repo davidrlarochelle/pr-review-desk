@@ -26,6 +26,8 @@ export function useGo() {
         navigate({ to: "/prs/$owner/$repo/$number", params: { ...splitRepo(repo), number: String(number) } }),
       finding: (repo: string, number: number, findingId: string) =>
         navigate({ to: "/prs/$owner/$repo/$number/findings/$findingId", params: { ...splitRepo(repo), number: String(number), findingId } }),
+      session: (repo: string, number: number, runId: string, opts: { replace?: boolean } = {}) =>
+        navigate({ to: "/prs/$owner/$repo/$number/runs/$runId", params: { ...splitRepo(repo), number: String(number), runId }, ...opts }),
       localList: () => navigate({ to: "/local" }),
       localBranch: (label: string, search: LocalSearch) => navigate({ to: "/local/$label", params: { label }, search }),
       localReview: ({ repo, number, repoLabel, branch, base }: LocalReviewRef) =>
@@ -39,6 +41,13 @@ export function useGo() {
           to: "/local/$label/reviews/$reviewRepo/$number/findings/$findingId",
           params: { label: repoLabel, reviewRepo: reviewRepoSegment(repo), number: String(number), findingId },
           search: { branch, base },
+        }),
+      localSession: ({ repo, number, repoLabel, branch, base }: LocalReviewRef, runId: string, opts: { replace?: boolean } = {}) =>
+        navigate({
+          to: "/local/$label/reviews/$reviewRepo/$number/runs/$runId",
+          params: { label: repoLabel, reviewRepo: reviewRepoSegment(repo), number: String(number), runId },
+          search: { branch, base },
+          ...opts,
         }),
     }),
     [navigate]

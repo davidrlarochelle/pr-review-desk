@@ -2,6 +2,7 @@ import { useCallback, useMemo } from "react";
 import { useQuery } from "../hooks/useApi";
 import { useStoredState } from "../lib/storage";
 import NotFound from "./ui/NotFound";
+import { SessionButton } from "./RunSession";
 import { useSSE } from "../hooks/useSSE";
 import type { FindingDto, ReviewDto } from "../../../shared/types";
 import SeverityBadge from "./SeverityBadge";
@@ -30,6 +31,7 @@ export default function LocalReviewDetail({
   base,
   onBack,
   onSelectFinding,
+  onOpenSession,
 }: {
   repo: string;
   number: number;
@@ -38,6 +40,7 @@ export default function LocalReviewDetail({
   base: string;
   onBack: () => void;
   onSelectFinding: (id: string) => void;
+  onOpenSession: (runId: string) => void;
 }) {
   // The open thread survives a refresh, in this tab only.
   const [view, setView] = useStoredState("session", `prd:view:local:${repo}#${number}`, { thread: false });
@@ -148,6 +151,7 @@ export default function LocalReviewDetail({
               </span>
             </div>
           </div>
+          {review && <SessionButton repo={repo} number={number} status={review.status} onOpen={onOpenSession} />}
           {review && (
             <Button
               variant={showThread ? "plain" : "quiet"}

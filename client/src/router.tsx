@@ -9,6 +9,7 @@ import PRDetail from "./components/PRDetail";
 import FindingDetail from "./components/FindingDetail";
 import LocalBranches from "./components/LocalBranches";
 import LocalReviewDetail from "./components/LocalReviewDetail";
+import RunSession from "./components/RunSession";
 import NotFound from "./components/ui/NotFound";
 import { useGo } from "./nav";
 import {
@@ -90,6 +91,7 @@ function PrPage() {
       onSelectPR={go.pr}
       onBack={go.prList}
       onSelectFinding={(findingId) => go.finding(repo, number, findingId)}
+      onOpenSession={(runId) => go.session(repo, number, runId)}
     />
   );
 }
@@ -113,6 +115,28 @@ function FindingPage() {
       number={number}
       onBack={() => go.pr(repo, number)}
       onSelectFinding={(findingId) => go.finding(repo, number, findingId)}
+    />
+  );
+}
+
+const sessionRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/prs/$owner/$repo/$number/runs/$runId",
+  component: SessionPage,
+});
+
+function SessionPage() {
+  const params = sessionRoute.useParams();
+  const { repo, number } = prParams(params);
+  const go = useGo();
+  return (
+    <RunSession
+      repo={repo}
+      number={number}
+      runId={params.runId}
+      onSelectRun={(runId) => go.session(repo, number, runId, { replace: true })}
+      onBack={() => go.pr(repo, number)}
+      backLabel="Back to pull request"
     />
   );
 }
@@ -186,6 +210,7 @@ function LocalReviewPage() {
       // Back lands on the same branch pair the review was run for.
       onBack={() => go.localBranch(ref.repoLabel, { branch: ref.branch || undefined, base: ref.base || undefined })}
       onSelectFinding={(findingId) => go.localFinding(ref, findingId)}
+      onOpenSession={(runId) => go.localSession(ref, runId)}
     />
   );
 }
@@ -214,6 +239,29 @@ function LocalFindingPage() {
   );
 }
 
+const localSessionRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/local/$label/reviews/$reviewRepo/$number/runs/$runId",
+  validateSearch: validateLocalSearch,
+  component: LocalSessionPage,
+});
+
+function LocalSessionPage() {
+  const params = localSessionRoute.useParams();
+  const ref = localReviewRef(params, localSessionRoute.useSearch());
+  const go = useGo();
+  return (
+    <RunSession
+      repo={ref.repo}
+      number={ref.number}
+      runId={params.runId}
+      onSelectRun={(runId) => go.localSession(ref, runId, { replace: true })}
+      onBack={() => go.localReview(ref)}
+      backLabel="Back to review"
+    />
+  );
+}
+
 function UnknownPath() {
   const go = useGo();
   return <NotFound title="Page not found" detail={window.location.pathname} backLabel="Back to pull requests" onBack={go.prList} />;
@@ -224,10 +272,12 @@ const routeTree = rootRoute.addChildren([
   prListRoute,
   prRoute,
   findingRoute,
+  sessionRoute,
   localIndexRoute,
   localListRoute,
   localReviewRoute,
   localFindingRoute,
+  localSessionRoute,
 ]);
 
 export const router = createRouter({

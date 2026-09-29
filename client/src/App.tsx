@@ -57,6 +57,7 @@ export default function App() {
     crumbs.push({ label: `${ref.repoLabel} · ${ref.branch || "review"}`, mono: true, onClick: () => go.localReview(ref) });
   }
   if (routeId.endsWith("/findings/$findingId")) crumbs.push({ label: "Finding" });
+  if (routeId.endsWith("/runs/$runId")) crumbs.push({ label: "Session" });
 
   return (
     <ToastProvider>

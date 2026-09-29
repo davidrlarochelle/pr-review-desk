@@ -3,6 +3,7 @@ import { getDb } from "../db/schema";
 import { reviewEvents, reviewId, startReview, getThreadLog } from "../services/review-engine";
 import { splitUnifiedDiff, findPatchForFile } from "../services/diff-utils";
 import { toFindingDto, toReviewDto } from "../services/dto";
+import { getRunSession, listRuns } from "../services/run-log";
 import type { FindingRow, ReviewEvent, ReviewRow } from "../../../shared/types";
 
 export const reviewsRouter = Router();
@@ -145,6 +146,20 @@ reviewsRouter.post("/reviews/:owner/:name/:number/submit", async (req, res) => {
 reviewsRouter.get("/reviews/:owner/:name/:number/thread", (req, res) => {
   const id = reviewId(`${req.params.owner}/${req.params.name}`, Number(req.params.number));
   res.json({ log: getThreadLog(id) });
+});
+
+reviewsRouter.get("/reviews/:owner/:name/:number/runs", (req, res) => {
+  const id = reviewId(`${req.params.owner}/${req.params.name}`, Number(req.params.number));
+  res.json(listRuns(id));
+});
+
+reviewsRouter.get("/runs/:runId", (req, res) => {
+  const session = getRunSession(req.params.runId);
+  if (!session) {
+    res.status(404).json({ error: "run not found" });
+    return;
+  }
+  res.json(session);
 });
 
 reviewsRouter.get("/reviews/:owner/:name/:number/diff", (req, res) => {

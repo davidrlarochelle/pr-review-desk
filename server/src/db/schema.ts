@@ -52,6 +52,30 @@ function migrate(database: Database.Database): void {
 
     CREATE INDEX IF NOT EXISTS findings_by_review ON findings (review_id);
 
+    CREATE TABLE IF NOT EXISTS review_runs (
+      id TEXT PRIMARY KEY,
+      review_id TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'running',
+      model TEXT,
+      effort TEXT,
+      max_turns INTEGER,
+      skills TEXT NOT NULL DEFAULT '[]',
+      prompt_chars INTEGER NOT NULL DEFAULT 0,
+      session_id TEXT,
+      num_turns INTEGER,
+      duration_ms INTEGER,
+      cost_usd REAL,
+      input_tokens INTEGER,
+      output_tokens INTEGER,
+      cache_read_tokens INTEGER,
+      cache_creation_tokens INTEGER,
+      error TEXT,
+      started_at TEXT NOT NULL,
+      finished_at TEXT
+    );
+
+    CREATE INDEX IF NOT EXISTS runs_by_review ON review_runs (review_id, started_at);
+
     CREATE TABLE IF NOT EXISTS pr_cache (
       repo TEXT PRIMARY KEY,
       prs TEXT NOT NULL,

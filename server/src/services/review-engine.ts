@@ -14,6 +14,7 @@ import {
 import { parseReport } from "./findings-parser";
 import { splitUnifiedDiff } from "./diff-utils";
 import { getLocalDiff, getLatestCommitMessage, localRepoIdentity } from "./local-git";
+import { appendStderr, appendStreamLine, createRun, finishRun, recordStats, statsFromEvent } from "./run-log";
 import type { Finding, Report, ReviewEvent } from "../../../shared/types";
 
 export const reviewEvents = new EventEmitter();
@@ -277,7 +278,7 @@ export function getThreadLog(id: string): string[] {
   return threadLogs.get(id) ?? [];
 }
 
-function runClaude(id: string, prompt: string, model?: string, maxTurns?: number): Promise<string> {
+function runClaude(id: string, runId: string, prompt: string, model?: string, maxTurns?: number): Promise<string> {
   return new Promise((resolve, reject) => {
     const claudePath = resolveClaudePath();
     const args = ["-p", "--output-format", "stream-json", "--verbose", "--tools", ""];
@@ -299,6 +300,16 @@ function runClaude(id: string, prompt: string, model?: string, maxTurns?: number
     let stderrOut = "";
     let lineCount = 0;
 
+    // Every line is kept raw for the session view before it is interpreted.
+    const keep = (line: string) => {
+      appendStreamLine(runId, line);
+      try {
+        recordStats(runId, statsFromEvent(JSON.parse(line)));
+      } catch {
+        // not JSON: already kept as-is
+      }
+    };
+
     child.stdout.on("data", (chunk: Buffer) => {
       const chunkStr = chunk.toString("utf8");
       buffer += chunkStr;
@@ -308,6 +319,7 @@ function runClaude(id: string, prompt: string, model?: string, maxTurns?: number
         buffer = buffer.slice(newlineIndex + 1);
         if (line) {
           lineCount++;
+          keep(line);
           textOut += handleStreamLine(id, line);
         }
       }
@@ -316,6 +328,7 @@ function runClaude(id: string, prompt: string, model?: string, maxTurns?: number
     child.stderr.on("data", (chunk: Buffer) => {
       const text = chunk.toString("utf8");
       stderrOut += text;
+      appendStderr(runId, text);
       log(id, `[stderr] ${text.trim().slice(0, 500)}`);
     });
 
@@ -328,6 +341,7 @@ function runClaude(id: string, prompt: string, model?: string, maxTurns?: number
       log(id, `claude process exited: code=${code} signal=${signal} lines=${lineCount} textOut=${textOut.length} chars`);
       if (buffer.trim()) {
         lineCount++;
+        keep(buffer.trim());
         textOut += handleStreamLine(id, buffer.trim());
       }
       if (code !== 0 && textOut.length === 0) {
@@ -435,9 +449,20 @@ async function runReview(id: string, repo: string, number: number, subjectLine: 
   log(id, `prompt built: ${prompt.length} chars`);
 
   const maxTurns = EFFORT_MAX_TURNS[effort ?? "standard"] ?? 3;
-  log(id, `starting claude subprocess...${model ? ` model=${model}` : " (default model)"} effort=${effort ?? "standard"} maxTurns=${maxTurns}`);
+  const runId = createRun(id, prompt, { model, effort, maxTurns, skills });
+  try {
+    await runAgent(id, runId, prompt, model, effort, maxTurns);
+    finishRun(runId, "reported");
+  } catch (err) {
+    finishRun(runId, "failed", err instanceof Error ? err.message : String(err));
+    throw err;
+  }
+}
+
+async function runAgent(id: string, runId: string, prompt: string, model: string | undefined, effort: string | undefined, maxTurns: number): Promise<void> {
+  log(id, `starting claude subprocess (run ${runId})...${model ? ` model=${model}` : " (default model)"} effort=${effort ?? "standard"} maxTurns=${maxTurns}`);
   threadLogs.delete(id);
-  const assistantText = await runClaude(id, prompt, model, maxTurns);
+  const assistantText = await runClaude(id, runId, prompt, model, maxTurns);
   log(id, `claude finished, output: ${assistantText.length} chars`);
 
   log(id, "extracting JSON block from output...");

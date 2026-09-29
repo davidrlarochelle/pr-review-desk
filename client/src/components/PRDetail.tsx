@@ -38,6 +38,7 @@ import { focusedAttr, useHotkeys } from "../hooks/useHotkeys";
 import { LAUNCH_DEFAULTS, LAUNCH_KEY, useStoredState } from "../lib/storage";
 import { loadPrOrder } from "../lib/url-state";
 import NotFound from "./ui/NotFound";
+import { SessionButton } from "./RunSession";
 
 interface ReviewWithFindings extends ReviewDto {
   findings: FindingDto[];
@@ -52,12 +53,14 @@ export default function PRDetail({
   onSelectPR,
   onBack,
   onSelectFinding,
+  onOpenSession,
 }: {
   repo: string;
   number: number;
   onSelectPR: (repo: string, number: number) => void;
   onBack: () => void;
   onSelectFinding: (id: string) => void;
+  onOpenSession: (runId: string) => void;
 }) {
   const [launch, setLaunch] = useStoredState("local", LAUNCH_KEY, LAUNCH_DEFAULTS);
   const { model, effort, skills: skillsInput } = launch;
@@ -298,6 +301,7 @@ export default function PRDetail({
             </span>
           )}
           <div className="flex-1" />
+          {review && <SessionButton repo={repo} number={number} status={review.status} onOpen={onOpenSession} />}
           {review && (
             <Button
               variant={showThread ? "plain" : "quiet"}

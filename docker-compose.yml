@@ -8,8 +8,8 @@ services:
       - ${HOME}/Documents/projets:/repos:ro                       # local checkouts, for reviewing branches pre-PR
     environment:
       - PORT=3100
-      - REPOS=Villeco-inc/villeco,Villeco-inc/linea-web,Villeco-inc/linea-mobile,Villeco-inc/linea-geo-api
-      - LOCAL_REPOS=villeco=Linea/linea-cortex/villeco,linea-web=Linea/linea-cortex/linea-web,linea-mobile=Linea/linea-cortex/linea-mobile,linea-geo-api=Linea/linea-cortex/linea-geo-api
+      - REPOS=Villeco-inc/villeco,Villeco-inc/linea-web,Villeco-inc/linea-mobile,Villeco-inc/linea-geo-api,Villeco-inc/linea-end2end
+      - LOCAL_REPOS=villeco=Linea/linea-cortex/villeco,linea-web=Linea/linea-cortex/linea-web,linea-mobile=Linea/linea-cortex/linea-mobile,linea-geo-api=Linea/linea-cortex/linea-geo-api,linea-end2end=Linea/linea-cortex/linea-end2end
       - NODE_ENV=production
       - GH_TOKEN=${GH_TOKEN}                                   # gh auth token from host keychain
       - CLAUDE_CODE_OAUTH_TOKEN=${CLAUDE_CODE_OAUTH_TOKEN}     # long-lived token from `claude setup-token`
