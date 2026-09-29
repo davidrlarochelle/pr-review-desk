@@ -8,7 +8,8 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      "/api": `http://localhost:${process.env.PORT || 37703}`,
+      // The dev server from `npm run dev:server`, not the Docker container.
+      "/api": `http://localhost:${process.env.PORT || 3100}`,
     },
   },
   build: {

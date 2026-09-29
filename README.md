@@ -1,43 +1,150 @@
-# pr-review-desk
+# PR Review Desk
 
-Local-first PR review desk — list GitHub PRs, run AI code reviews with Claude Code, post findings as inline comments.
+A desk for reviewing code with Claude, running on your own machine.
 
-## Prerequisites
+It lists the open pull requests of your GitHub repositories, runs a Claude Code review on any of them, and lets you post the findings back to GitHub as inline comments — one by one, after you have read and edited them. It can also review a **local branch** before you open a PR, and keeps a full record of every review session: the prompt, everything the agent said, and what it cost.
 
-- Docker
-- `gh auth login` (authenticated on the host)
-- Claude Code CLI authenticated on the host
+## What you need
 
-## Quick start
+- **Docker** with Compose v2 (Docker Desktop is enough).
+- **The GitHub CLI**, logged in: `gh auth login`. Only used once, to get a token.
+- **Claude Code**, logged in: `claude`. Only used once, to get a token.
+
+The app runs in a container that cannot see the logins on your machine. It only sees the two tokens you put in `.env`.
+
+## Install
 
 ```bash
-docker compose up --build
+git clone https://github.com/davidrlarochelle/pr-review-desk.git
+cd pr-review-desk
+cp .env.example .env
 ```
 
-Then open http://localhost:3100
+Fill in `.env`:
 
-## Development mode
+| Variable | How to get it |
+| --- | --- |
+| `REPOS` | The repositories to list, `owner/name,owner/name` |
+| `GH_TOKEN` | `gh auth token` |
+| `CLAUDE_CODE_OAUTH_TOKEN` | `claude setup-token` (a long-lived token, made for headless use) |
+
+Then:
+
+```bash
+docker compose up -d --build
+```
+
+Open **http://localhost:37703**.
+
+If a required value is missing, `docker compose up` stops and names it, instead of starting an app that cannot work.
+
+## Reviewing local branches (optional)
+
+To review a branch that has no PR yet, point the app at the folder holding your checkouts. Docker mounts it read-only at `/repos`.
+
+```bash
+REPOS_ROOT=/Users/me/code                    # absolute path, defaults to ~/Documents
+LOCAL_REPOS=api=my-org/api,web=my-org/web    # label=path relative to REPOS_ROOT
+```
+
+The review compares **commits**: `base...branch` in that checkout. Work that is not committed yet, or that only lives in another worktree, is not part of the diff. An empty diff gives a review with no findings.
+
+## All settings
+
+| Variable | Required | Default | What it does |
+| --- | --- | --- | --- |
+| `REPOS` | yes | — | GitHub repositories to list PRs from |
+| `GH_TOKEN` | yes | — | Lists PRs and posts comments **as you** |
+| `CLAUDE_CODE_OAUTH_TOKEN` | yes | — | Runs `claude -p` inside the container |
+| `REPOS_ROOT` | no | `~/Documents` | Folder with your local checkouts |
+| `LOCAL_REPOS` | no | none | Local checkouts to offer, `label=relative/path` |
+| `HOST_PORT` | no | `37703` | Port the app is served on |
+| `PORT` | no | `3100` | Port of the server in dev mode |
+
+## Using it
+
+- **Pull requests**: pick a repository (or all repositories of the org), filter by author, status or label, open a PR, choose a model and an effort level, then **Start review**. Findings arrive sorted by severity.
+- **Findings**: each one shows the background, the problem and a suggested fix, next to the diff. Edit the suggested comment, then post it inline or as a PR comment, or dismiss it.
+- **Local branches**: pick a checkout, a branch and a base, then review. You get a **Copy fix prompt** to hand the findings to your coding agent.
+- **Sessions**: the **Session** button on a review shows the latest run of the agent: model, turns, duration, tokens, cost, the full prompt and every event it streamed. Earlier runs are one click away.
+- **Every screen has its own URL**. Refresh, Back and Forward work, and each list remembers your last repository and that repository's filters.
+- **Look**: switch between two design systems (Brutal, Blueprint), in light or dark, at the bottom of the left rail.
+
+### Keyboard
+
+| Where | Keys |
+| --- | --- |
+| Anywhere | `⌘K` / `Ctrl+K` jump to a PR, branch or finding |
+| PR list, local branches | `J` / `K` move, `Enter` open, `R` start a review |
+| PR detail | `X` select the focused finding, `P` post the selection, `Esc` back |
+| Finding | `J` / `K` next / previous finding, `Esc` back |
+
+### Models and effort
+
+Model: Sonnet, Opus, Haiku or Fable. Effort caps the agent's turns: Quick 1, Standard 3, Thorough 10, Exhaustive 25. Your last choice is remembered.
+
+## Cost
+
+Every review runs on **your** Claude plan. For reference, reviews of real PRs with Opus cost between $0.15 and $0.32 each; the Session screen shows the exact figure for every run.
+
+## Your data
+
+Everything lives in `./data`, next to the code, and survives rebuilds:
+
+- `data/reviews.db` — SQLite: reviews, findings, cached PR lists, runs.
+- `data/runs/<run id>/` — for each run: `prompt.txt`, `stream.jsonl` (the raw events), `stderr.log`.
+
+To start from scratch: `docker compose down`, delete `data/`, start again.
+
+## Updating
+
+```bash
+git pull
+docker compose up -d --build
+```
+
+Nothing to migrate by hand: the database schema is completed at startup.
+
+## Security
+
+- The app is served on `127.0.0.1` only. It holds your GitHub token and posts comments in your name, so it must not be reachable from the network.
+- `.env` holds your tokens and is git-ignored. Never commit it.
+- Local checkouts are mounted read-only.
+
+## Troubleshooting
+
+| Symptom | Cause and fix |
+| --- | --- |
+| `docker compose up` stops with `GH_TOKEN is not set in .env` (or another variable) | Fill it in `.env`, see [Install](#install) |
+| PR list says *GitHub is not authenticated* | `GH_TOKEN` is empty, wrong or expired. Run `gh auth token`, update `.env`, then `docker compose up -d` |
+| A review fails right away | Open its **Session**: the stderr panel shows the Claude error. Usually `CLAUDE_CODE_OAUTH_TOKEN` is missing or expired; run `claude setup-token` again |
+| Local branches list is empty | `LOCAL_REPOS` is empty, or its paths are wrong relative to `REPOS_ROOT` |
+| A local review finds nothing | The branch has no commits beyond its base. Commit the work first (see [Reviewing local branches](#reviewing-local-branches-optional)) |
+| Port 37703 is taken | Set `HOST_PORT` in `.env` |
+
+Logs: `docker compose logs -f app`.
+
+## Developing
+
+Needs Node 22.9 or later (`.nvmrc`), plus `gh` and `claude` installed on your machine, since the server calls them directly.
 
 ```bash
 npm install
-npm run dev
+cp .env.example .env    # same file as for Docker
+npm run dev             # server on :3100, client on http://localhost:5173
+npm test
 ```
 
-Runs Express on `:3100` and Vite on `:5173`.
+In dev mode the server reads `.env` itself and uses your checkouts in place, from `REPOS_ROOT`. It uses the same `./data` folder as the container, so stop one before starting the other.
 
-## Environment variables
+### How it is built
 
-| Variable | Description |
-|----------|-------------|
-| `PORT` | Port the Express server listens on (default `3100`) |
-| `REPOS` | Comma-separated list of `owner/repo` to list PRs from |
+Express and SQLite on the server, React and Vite in the client, TanStack Router for the URLs. The server shells out to `gh` for everything GitHub and to `claude -p --output-format stream-json` for reviews, then parses the JSON report the agent ends with into findings.
 
-## How it works
-
-- Lists PRs across configured repos via the `gh` CLI
-- Runs Claude Code with review skills against the PR diff
-- Parses findings and lets you post them one-by-one as inline comments
-
-## Architecture
-
-Express backend + React frontend + SQLite, shells out to the `gh` and `claude` CLIs.
+| Path | What is there |
+| --- | --- |
+| `server/src/services/review-engine.ts` | Builds the prompt, runs Claude, imports findings |
+| `server/src/services/run-log.ts` | Records every run (the Session screen) |
+| `server/src/services/github.ts`, `local-git.ts` | GitHub and local git access |
+| `client/src/router.tsx` | Every screen and its URL |
+| `client/src/index.css` | Both design systems; see `docs/redesign/theming.md` |

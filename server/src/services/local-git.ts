@@ -10,14 +10,18 @@ export interface LocalRepo {
   path: string;
 }
 
+// Docker mounts REPOS_ROOT at /repos and says so; in dev mode the checkouts are read in place.
+const localReposRoot = () => process.env.LOCAL_REPOS_ROOT || process.env.REPOS_ROOT || "/repos";
+
 export function configuredLocalRepos(): LocalRepo[] {
+  const root = localReposRoot().replace(/\/+$/, "");
   return (process.env.LOCAL_REPOS ?? "")
     .split(",")
     .map((entry) => entry.trim())
     .filter(Boolean)
     .map((entry) => {
       const [label, relPath] = entry.includes("=") ? entry.split("=") : [entry, entry];
-      return { label, path: `/repos/${relPath}` };
+      return { label, path: `${root}/${relPath}` };
     });
 }
 

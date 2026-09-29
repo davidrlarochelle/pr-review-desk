@@ -230,7 +230,11 @@ export default function PRList({
         <div role="alert" className="flex items-center gap-3 edge bg-danger-soft px-3.5 py-2.5 text-fg lift">
           <Icon name="alert" className="size-4 text-danger-ink" />
           <span className="font-medium">Could not load pull requests</span>
-          <span className="font-mono text-xs text-danger-ink">{error}</span>
+          <span className="font-mono text-xs text-danger-ink">
+            {/gh auth login|GH_TOKEN|Bad credentials|HTTP 401/.test(error)
+              ? "GitHub is not authenticated: set GH_TOKEN in .env (gh auth token), then restart the app."
+              : error}
+          </span>
           <Button size="sm" className="ml-auto" onClick={refresh}>
             <Icon name="refresh" />
             Retry

@@ -34,7 +34,7 @@ beforeEach(() => {
 
 describe("search round trip", () => {
   it("keeps repeated keys as lists and values with commas intact", () => {
-    const search = { repo: "org:Villeco-inc", label: ["needs review", "a,b"], sort: "updated" };
+    const search = { repo: "org:acme", label: ["needs review", "a,b"], sort: "updated" };
     const parsed = validatePrListSearch(parseSearch(stringifySearch(search)));
     expect(parsed).toEqual({ ...search, author: undefined, status: undefined, dir: undefined });
   });
@@ -58,11 +58,11 @@ describe("search round trip", () => {
 
 describe("list memory", () => {
   it("restores the last repo with that repo's own filters", () => {
-    savePrList({ repo: "Villeco-inc/villeco", label: ["bug"], sort: "updated" });
-    savePrList({ repo: "Villeco-inc/linea-web", author: ["bob"] });
-    expect(rememberedPrList()).toEqual({ repo: "Villeco-inc/linea-web", ...loadPrFilters("Villeco-inc/linea-web") });
-    expect(loadPrFilters("Villeco-inc/villeco")).toMatchObject({ label: ["bug"], sort: "updated" });
-    expect(loadPrFilters("Villeco-inc/villeco").author).toBeUndefined();
+    savePrList({ repo: "acme/api", label: ["bug"], sort: "updated" });
+    savePrList({ repo: "acme/web", author: ["bob"] });
+    expect(rememberedPrList()).toEqual({ repo: "acme/web", ...loadPrFilters("acme/web") });
+    expect(loadPrFilters("acme/api")).toMatchObject({ label: ["bug"], sort: "updated" });
+    expect(loadPrFilters("acme/api").author).toBeUndefined();
   });
 
   it("remembers nothing until a repo is chosen", () => {
@@ -70,9 +70,9 @@ describe("list memory", () => {
   });
 
   it("forgets a local repo so /local stops redirecting to it", () => {
-    saveLocalSelection("villeco", { branch: "feat/x", base: "main" });
-    expect(rememberedLocalRepo()).toBe("villeco");
-    forgetLocalRepo("villeco");
+    saveLocalSelection("api", { branch: "feat/x", base: "main" });
+    expect(rememberedLocalRepo()).toBe("api");
+    forgetLocalRepo("api");
     expect(rememberedLocalRepo()).toBeNull();
   });
 });
@@ -84,7 +84,7 @@ describe("pager order and local ids", () => {
   });
 
   it("maps local review repos to a slash-free segment and back", () => {
-    expect(reviewRepoSegment("local/villeco-9f2c1a0b3d")).toBe("villeco-9f2c1a0b3d");
-    expect(reviewRepoFromSegment("villeco-9f2c1a0b3d")).toBe("local/villeco-9f2c1a0b3d");
+    expect(reviewRepoSegment("local/api-9f2c1a0b3d")).toBe("api-9f2c1a0b3d");
+    expect(reviewRepoFromSegment("api-9f2c1a0b3d")).toBe("local/api-9f2c1a0b3d");
   });
 });
