@@ -7,7 +7,7 @@ import { useRepos } from "../hooks/useRepos";
 import { JUMP_KEY_LABEL, isMac } from "./CommandPalette";
 import { Segmented } from "./ui/Field";
 import { SETTINGS_SHOW_SYSTEM_SWITCH, useSystem, type System, type Theme } from "./SystemProvider";
-import { useNotificationPermission } from "../hooks/useReviewNotifications";
+import { useNotificationPermission, useUnreadCount } from "../hooks/useNotifications";
 
 export type Section = "prs" | "local" | "compare" | "activity" | "repos" | "settings";
 export type BuiltSection = "prs" | "local" | "compare" | "activity";
@@ -75,6 +75,7 @@ interface AppShellProps {
   onNavigate: (section: BuiltSection) => void;
   onJump: () => void;
   onPickRepos: () => void;
+  onOpenNotifications: () => void;
 }
 
 const SECTIONS: { id: Section; label: string; icon: IconName; built: boolean }[] = [
@@ -86,7 +87,7 @@ const SECTIONS: { id: Section; label: string; icon: IconName; built: boolean }[]
   { id: "settings", label: "Settings", icon: "settings", built: false },
 ];
 
-export default function AppShell({ section, crumbs, actions, children, onNavigate, onJump, onPickRepos }: AppShellProps) {
+export default function AppShell({ section, crumbs, actions, children, onNavigate, onJump, onPickRepos, onOpenNotifications }: AppShellProps) {
   const [actionsEl, setActionsEl] = useState<HTMLElement | null>(null);
   const [counts, setCounts] = useState<Partial<Record<Section, number>>>({});
   const setCount = useCallback(
@@ -98,7 +99,7 @@ export default function AppShell({ section, crumbs, actions, children, onNavigat
   return (
     <ShellContext.Provider value={ctx}>
       <div className="flex h-screen overflow-hidden bg-page text-fg">
-        <Rail section={section} counts={counts} onNavigate={onNavigate} onJump={onJump} onPickRepos={onPickRepos} />
+        <Rail section={section} counts={counts} onNavigate={onNavigate} onJump={onJump} onPickRepos={onPickRepos} onOpenNotifications={onOpenNotifications} />
         <div className="flex min-w-0 flex-1 flex-col">
           <div className="flex h-[54px] shrink-0 items-center gap-4 edge-b bg-page px-6">
             {crumbs}
@@ -119,13 +120,16 @@ function Rail({
   onNavigate,
   onJump,
   onPickRepos,
+  onOpenNotifications,
 }: {
   section: Section;
   counts: Partial<Record<Section, number>>;
   onNavigate: (section: BuiltSection) => void;
   onJump: () => void;
   onPickRepos: () => void;
+  onOpenNotifications: () => void;
 }) {
+  const unread = useUnreadCount();
   const { data: viewer } = useQuery<{ login: string }>("/api/viewer", [], 5 * 60_000);
   const { data: repos } = useRepos();
   const org = repos?.[0]?.split("/")[0];
@@ -179,6 +183,19 @@ function Rail({
               </li>
             );
           })}
+          <li>
+            <button
+              type="button"
+              aria-haspopup="dialog"
+              aria-label={unread > 0 ? `Notifications, ${unread} unread` : "Notifications"}
+              onClick={onOpenNotifications}
+              className="flex h-10 w-full items-center gap-2.5 edge border-transparent px-2.5 text-left label-caps text-rail-fg hover:border-rail-line hover:bg-rail-hover focus-ring"
+            >
+              <Icon name="bell" className="size-4 shrink-0" />
+              <span className="flex-1 truncate">Notifications</span>
+              {unread > 0 && <span className="bg-danger px-1.5 font-mono text-[11px] tracking-normal text-danger-fg">{unread > 99 ? "99+" : unread}</span>}
+            </button>
+          </li>
         </ul>
       </nav>
 
@@ -236,7 +253,7 @@ function NotificationsButton() {
     <button
       type="button"
       onClick={request}
-      title="Get a system notification when a review finishes or fails"
+      title="Get a system notification for review outcomes and GitHub events"
       className="flex h-[38px] w-full items-center gap-2 edge border-rail-line px-2.5 text-left text-rail-fg hover:border-rail-accent hover:text-rail-accent focus-ring"
     >
       <Icon name="bell" className="size-3.5 shrink-0" />

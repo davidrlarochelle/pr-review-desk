@@ -106,6 +106,23 @@ export function migrate(database: Database.Database): void {
     followup_note: "TEXT",
     created_at: "TEXT",
   });
+
+  // Notification history: review outcomes and the GitHub events the poller saw. target is a JSON ReviewTarget.
+  database.exec(`
+    CREATE TABLE IF NOT EXISTS notifications (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      kind TEXT NOT NULL,
+      title TEXT NOT NULL,
+      body TEXT NOT NULL DEFAULT '',
+      tag TEXT NOT NULL,
+      url TEXT,
+      target TEXT,
+      created_at TEXT NOT NULL,
+      read_at TEXT
+    );
+
+    CREATE INDEX IF NOT EXISTS notifications_unread ON notifications (read_at);
+  `);
 }
 
 /** CREATE TABLE IF NOT EXISTS leaves existing tables alone: columns added later go through here. Additive only. */
