@@ -16,6 +16,7 @@ import { configuredLocalRepos } from "./services/local-git";
 import { notify, startReviewOutcomeNotifications, watchEventNotification } from "./services/notifications";
 import { githubEvents, startGithubPoller } from "./services/github-poller";
 import type { WatchEvent } from "./services/github-watch";
+import { handleAutoReview } from "./services/auto-review";
 
 const db = getDb();
 const stuck = db.prepare("UPDATE reviews SET status = 'failed', error = 'Server restarted during review' WHERE status IN ('running', 'queued')").run();
@@ -54,7 +55,10 @@ app.use("/api", telemetryRouter);
 app.use("/api", notificationsRouter);
 
 startReviewOutcomeNotifications();
-githubEvents.on("event", (event: WatchEvent) => notify(watchEventNotification(event)));
+githubEvents.on("event", (event: WatchEvent) => {
+  notify(watchEventNotification(event));
+  void handleAutoReview(event);
+});
 
 if (process.env.NODE_ENV === "production") {
   const distDir = path.join(process.cwd(), "dist");

@@ -316,3 +316,8 @@ export interface WatchSettings {
   autoReviewModel: string | null;
   autoReviewEffort: string | null;
 }
+
+export interface WatchSettingsDto extends WatchSettings {
+  /** What today's finished review runs (UTC) cost, against dailyCapUsd. */
+  spentTodayUsd: number;
+}

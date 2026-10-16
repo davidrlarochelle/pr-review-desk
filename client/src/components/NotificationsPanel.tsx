@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import Button from "./ui/Button";
 import Icon, { type IconName } from "./ui/Icon";
 import Skeleton from "./ui/Skeleton";
+import { Segmented } from "./ui/Field";
 import { useToast } from "./ui/Toast";
+import WatchSettingsForm from "./WatchSettingsForm";
 import { openNotificationList, useOpenNotification } from "../hooks/useNotifications";
 import { fetchJson } from "../lib/api";
 import { relativeTime } from "../lib/format";
@@ -18,11 +20,17 @@ const KIND: Record<DeskNotificationKind, { icon: IconName; label: string; tone: 
   "auto-review-skipped": { icon: "gauge", label: "Auto-review skipped", tone: "text-warn-ink" },
 };
 
+const TABS: { value: "recent" | "settings"; label: string }[] = [
+  { value: "recent", label: "Recent" },
+  { value: "settings", label: "Settings" },
+];
+
 /** The recent notifications. Opening it marks them all read; the ones that were unread keep a marker while it stays open. */
 export default function NotificationsPanel({ onClose }: { onClose: () => void }) {
   const [items, setItems] = useState<DeskNotification[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [polling, setPolling] = useState(false);
+  const [tab, setTab] = useState<"recent" | "settings">("recent");
   const open = useOpenNotification();
   const { toast } = useToast();
 
@@ -66,72 +74,99 @@ export default function NotificationsPanel({ onClose }: { onClose: () => void })
           <h2 id="notifications-title" className="font-display text-[22px] uppercase leading-none">
             Notifications
           </h2>
-          <button type="button" onClick={onClose} aria-label="Close" className="ml-auto text-fg-3 hover:text-fg focus-ring" autoFocus>
+          <div className="ml-auto">
+            <Segmented ariaLabel="Notifications view" value={tab} onChange={setTab} options={TABS} />
+          </div>
+          <button type="button" onClick={onClose} aria-label="Close" className="text-fg-3 hover:text-fg focus-ring" autoFocus>
             <Icon name="x" className="size-4" />
           </button>
         </div>
 
-        <div role="list" aria-label="Recent notifications" className="min-h-[120px] flex-1 overflow-y-auto">
-          {error ? (
-            <div role="alert" className="flex flex-col items-start gap-3 p-5">
-              <span className="font-medium">Could not load the notifications</span>
-              <span className="font-mono text-xs text-danger-ink">{error}</span>
-              <Button size="sm" onClick={load}>
-                <Icon name="refresh" />
-                Retry
-              </Button>
-            </div>
-          ) : !items ? (
-            <div className="flex flex-col gap-3 p-5" aria-label="Loading notifications">
-              {[0, 1, 2].map((i) => (
-                <Skeleton key={i} className="h-5 w-2/3" />
-              ))}
-            </div>
-          ) : items.length === 0 ? (
-            <div className="px-5 py-6 text-center text-fg-2">Nothing yet. Review outcomes, review requests, pushes on reviewed PRs and replies to the Desk's comments land here.</div>
-          ) : (
-            items.map((n) => {
-              const kind = KIND[n.kind] ?? KIND["review-reported"];
-              return (
-                <div key={n.id} role="listitem" className="edge-soft-b last:border-b-0">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      open(n);
-                      onClose();
-                    }}
-                    className="flex w-full items-start gap-3 px-5 py-3 text-left hover:bg-row-hover focus-ring"
-                  >
-                    <Icon name={kind.icon} className={`mt-0.5 size-4 shrink-0 ${kind.tone}`} />
-                    <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                      <span className="flex items-center gap-2">
-                        <span className="label-caps text-fg-3">{kind.label}</span>
-                        {n.readAt === null && <span className="bg-acid px-1 font-mono text-[10px] leading-[14px] text-acid-fg">NEW</span>}
-                        <span className="ml-auto shrink-0 font-mono text-[11px] text-fg-3" title={new Date(n.createdAt).toLocaleString()}>
-                          {relativeTime(n.createdAt)}
-                        </span>
-                      </span>
-                      <span className="truncate font-mono text-[13px] font-medium">{n.title}</span>
-                      <span className="line-clamp-2 text-fg-2">{n.body}</span>
-                    </span>
-                    {n.kind === "comment-reply" && <Icon name="external" className="mt-0.5 size-3.5 shrink-0 text-fg-3" />}
-                  </button>
-                </div>
-              );
-            })
-          )}
-        </div>
-
-        <div className="flex shrink-0 items-center gap-3 edge-t bg-subtle px-5 py-3">
-          <span className="label-caps text-fg-2">{items ? `${items.length} recent` : "…"}</span>
-          <div className="ml-auto flex items-center gap-2">
-            <Button onClick={pollNow} disabled={polling}>
-              <Icon name="refresh" />
-              {polling ? "Checking…" : "Check GitHub now"}
-            </Button>
+        {tab === "settings" ? (
+          <div className="min-h-[120px] flex-1 overflow-y-auto">
+            <WatchSettingsForm />
           </div>
-        </div>
+        ) : (
+          <>
+            <RecentList
+              items={items}
+              error={error}
+              onRetry={load}
+              onOpen={(n) => {
+                open(n);
+                onClose();
+              }}
+            />
+            <div className="flex shrink-0 items-center gap-3 edge-t bg-subtle px-5 py-3">
+              <span className="label-caps text-fg-2">{items ? `${items.length} recent` : "…"}</span>
+              <div className="ml-auto flex items-center gap-2">
+                <Button onClick={pollNow} disabled={polling}>
+                  <Icon name="refresh" />
+                  {polling ? "Checking…" : "Check GitHub now"}
+                </Button>
+              </div>
+            </div>
+          </>
+        )}
       </div>
+    </div>
+  );
+}
+
+function RecentList({
+  items,
+  error,
+  onRetry,
+  onOpen,
+}: {
+  items: DeskNotification[] | null;
+  error: string | null;
+  onRetry: () => void;
+  onOpen: (n: DeskNotification) => void;
+}) {
+  return (
+    <div role="list" aria-label="Recent notifications" className="min-h-[120px] flex-1 overflow-y-auto">
+      {error ? (
+        <div role="alert" className="flex flex-col items-start gap-3 p-5">
+          <span className="font-medium">Could not load the notifications</span>
+          <span className="font-mono text-xs text-danger-ink">{error}</span>
+          <Button size="sm" onClick={onRetry}>
+            <Icon name="refresh" />
+            Retry
+          </Button>
+        </div>
+      ) : !items ? (
+        <div className="flex flex-col gap-3 p-5" aria-label="Loading notifications">
+          {[0, 1, 2].map((i) => (
+            <Skeleton key={i} className="h-5 w-2/3" />
+          ))}
+        </div>
+      ) : items.length === 0 ? (
+        <div className="px-5 py-6 text-center text-fg-2">Nothing yet. Review outcomes, review requests, pushes on reviewed PRs and replies to the Desk's comments land here.</div>
+      ) : (
+        items.map((n) => {
+          const kind = KIND[n.kind] ?? KIND["review-reported"];
+          return (
+            <div key={n.id} role="listitem" className="edge-soft-b last:border-b-0">
+              <button type="button" onClick={() => onOpen(n)} className="flex w-full items-start gap-3 px-5 py-3 text-left hover:bg-row-hover focus-ring">
+                <Icon name={kind.icon} className={`mt-0.5 size-4 shrink-0 ${kind.tone}`} />
+                <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                  <span className="flex items-center gap-2">
+                    <span className="label-caps text-fg-3">{kind.label}</span>
+                    {n.readAt === null && <span className="bg-acid px-1 font-mono text-[10px] leading-[14px] text-acid-fg">NEW</span>}
+                    <span className="ml-auto shrink-0 font-mono text-[11px] text-fg-3" title={new Date(n.createdAt).toLocaleString()}>
+                      {relativeTime(n.createdAt)}
+                    </span>
+                  </span>
+                  <span className="truncate font-mono text-[13px] font-medium">{n.title}</span>
+                  <span className="line-clamp-2 text-fg-2">{n.body}</span>
+                </span>
+                {n.kind === "comment-reply" && <Icon name="external" className="mt-0.5 size-3.5 shrink-0 text-fg-3" />}
+              </button>
+            </div>
+          );
+        })
+      )}
     </div>
   );
 }
