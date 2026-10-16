@@ -23,10 +23,11 @@ interface PrSnapshotResponse {
   review: ReviewDto | null;
 }
 import SeverityBadge from "./SeverityBadge";
-import StatusBadge, { FindingStateBadge } from "./StatusBadge";
+import StatusBadge, { FindingStateBadge, FollowupBadge } from "./StatusBadge";
 import Button, { LinkButton } from "./ui/Button";
 import Card, { Band, Chip } from "./ui/Card";
 import { Checkbox, Input, Select } from "./ui/Field";
+import ReviewInstructions, { useReviewInstructions } from "./ReviewInstructions";
 import Icon from "./ui/Icon";
 import Avatar from "./ui/Avatar";
 import Skeleton, { CardSkeleton } from "./ui/Skeleton";
@@ -67,6 +68,7 @@ export default function PRDetail({
   const setModel = (model: string) => setLaunch((l) => ({ ...l, model }));
   const setEffort = (effort: string) => setLaunch((l) => ({ ...l, effort }));
   const setSkillsInput = (skills: string) => setLaunch((l) => ({ ...l, skills }));
+  const [instructions, setInstructions] = useReviewInstructions(`pr:${repo}#${number}`);
   // What this screen was showing survives a refresh, in this tab only.
   const [view, setView] = useStoredState("session", `prd:view:pr:${repo}#${number}`, { thread: false, selected: [] as string[] });
   const showThread = view.thread;
@@ -121,7 +123,7 @@ export default function PRDetail({
   const handleStartReview = async () => {
     const skills = skillsInput.split(",").map((s) => s.trim()).filter(Boolean);
     try {
-      await startReview.mutate({ repo, number, skills, model, effort });
+      await startReview.mutate({ repo, number, skills, model, effort, instructions });
       refetchReview();
     } catch (err) {
       toast({ kind: "error", message: `Could not start review: ${(err as Error).message}` });
@@ -228,7 +230,7 @@ export default function PRDetail({
         <div className="flex items-start gap-4 px-5 pb-4 pt-[18px]">
           <div className="flex min-w-0 flex-1 flex-col gap-2">
             {pr ? (
-              <h1 className="text-xl font-bold leading-[28px] tracking-[-0.015em]">
+              <h1 className="text-xl font-bold leading-[calc(28px*var(--font-scale))] tracking-[-0.015em]">
                 {pr.title} <span className="ml-1 font-mono text-sm font-medium text-fg-3">#{number}</span>
               </h1>
             ) : (
@@ -268,14 +270,14 @@ export default function PRDetail({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 edge-t bg-subtle px-5 py-3">
-          <Select id="model" icon="cpu" label="Model" wrapperClassName="w-[168px]" value={model} onChange={(e) => setModel(e.target.value)} disabled={isRunning}>
+        <div className="flex flex-wrap items-center gap-2 edge-t bg-subtle px-5 py-3">
+          <Select id="model" icon="cpu" label="Model" wrapperClassName="w-[calc(168px*var(--font-scale))] shrink-0" value={model} onChange={(e) => setModel(e.target.value)} disabled={isRunning}>
             <option value="sonnet">Sonnet</option>
             <option value="opus">Opus</option>
             <option value="haiku">Haiku</option>
             <option value="fable">Fable</option>
           </Select>
-          <Select id="effort" icon="gauge" label="Effort" wrapperClassName="w-[248px]" value={effort} onChange={(e) => setEffort(e.target.value)} disabled={isRunning}>
+          <Select id="effort" icon="gauge" label="Effort" wrapperClassName="w-[calc(248px*var(--font-scale))] shrink-0" value={effort} onChange={(e) => setEffort(e.target.value)} disabled={isRunning}>
             <option value="quick">Quick · low effort</option>
             <option value="standard">Standard · medium effort</option>
             <option value="thorough">Thorough · high effort</option>
@@ -284,7 +286,7 @@ export default function PRDetail({
           <Input
             id="skills"
             icon="star"
-            wrapperClassName="w-[260px]"
+            wrapperClassName="min-w-[calc(180px*var(--font-scale))] flex-1"
             value={skillsInput}
             onChange={(e) => setSkillsInput(e.target.value)}
             placeholder="Skills, comma-separated (optional)"
@@ -295,7 +297,7 @@ export default function PRDetail({
             {isRunning ? "Review running…" : review?.status === "failed" ? "Retry Review" : "Start Review"}
           </Button>
           {review && (
-            <span className="font-mono text-xs text-fg-3">
+            <span className="whitespace-nowrap font-mono text-xs text-fg-3">
               {review.skills.length > 0 && `${review.skills.join(", ")} · `}
               {relativeTime(review.updatedAt)}
             </span>
@@ -320,6 +322,7 @@ export default function PRDetail({
             </Button>
           )}
         </div>
+        <ReviewInstructions id="pr-instructions" value={instructions} onChange={setInstructions} disabled={isRunning} />
 
         {review?.status === "failed" && review.error && (
           <div role="alert" className="flex flex-col edge-t bg-danger-soft">
@@ -329,7 +332,7 @@ export default function PRDetail({
             </Band>
             <div className="flex items-start gap-3.5 px-5 pb-4 pt-3.5">
               <div className="flex flex-1 flex-col gap-1.5">
-                <pre className="max-w-[900px] whitespace-pre-wrap edge bg-surface px-2.5 py-2 font-mono text-xs leading-[18px] text-danger-ink">{review.error}</pre>
+                <pre className="max-w-[900px] whitespace-pre-wrap edge bg-surface px-2.5 py-2 font-mono text-xs leading-[calc(18px*var(--font-scale))] text-danger-ink">{review.error}</pre>
               </div>
               <div className="flex gap-2">
                 <ReimportButton repo={repo} number={number} error={review.error} onDone={refetchReview} />
@@ -371,7 +374,7 @@ export default function PRDetail({
               Review thread
             </span>
             <span className="font-mono text-term-muted">{threadData ? `${threadData.log.length} entries` : "loading…"}</span>
-            <span className="ml-3 inline-flex gap-3 text-[11px] text-term-muted">
+            <span className="ml-3 inline-flex gap-3 text-[length:calc(11px*var(--font-scale))] text-term-muted">
               <span>
                 <span className="text-term-tool">■</span> tool call
               </span>
@@ -410,7 +413,7 @@ export default function PRDetail({
       {review && (
         <Card className="overflow-hidden">
           <div className="flex h-12 items-center gap-3 edge-b pl-5 pr-4">
-            <span className="font-display text-[20px] uppercase leading-none">Findings</span>
+            <span className="font-display text-[length:calc(20px*var(--font-scale))] uppercase leading-none">Findings</span>
             <span className="font-mono text-xs text-fg-3">{sortedFindings.length}</span>
             {sortedFindings.length > 0 && (
               <span className="ml-1 inline-flex gap-2">
@@ -450,11 +453,12 @@ export default function PRDetail({
                     onClick={() => onSelectFinding(finding.id)}
                     className="flex h-full min-w-0 flex-1 items-center gap-3 text-left outline-none"
                   >
-                    <SeverityBadge severity={finding.severity} className="w-[84px] justify-center" />
+                    <SeverityBadge severity={finding.severity} className="w-[calc(84px*var(--font-scale))] justify-center" />
                     <span className="w-[300px] shrink-0 truncate font-mono text-xs text-fg-3" title={finding.file}>
                       {finding.file}:{finding.startLine ?? "?"}
                     </span>
-                    <span className={`min-w-0 flex-1 truncate font-medium ${finding.state === "dismissed" ? "text-fg-3" : ""}`}>{finding.title}</span>
+                    <span className={`min-w-0 flex-1 truncate font-medium ${finding.state === "dismissed" || finding.state === "resolved" ? "text-fg-3" : ""}`}>{finding.title}</span>
+                    <FollowupBadge status={finding.followupStatus} state={finding.state} />
                     <FindingStateBadge state={finding.state} />
                     <Icon name="chevronRight" className="size-4 text-fg-3 group-hover:text-fg" />
                   </button>

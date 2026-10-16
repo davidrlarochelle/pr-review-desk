@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { getDb } from "../db/schema";
-import { reviewEvents, reviewOutcomes, reviewId, startReview, getThreadLog, reimportRun } from "../services/review-engine";
+import { reviewEvents, reviewOutcomes, reviewId, startReview, getThreadLog, reimportRun, cleanInstructions } from "../services/review-engine";
 import { splitUnifiedDiff, findPatchForFile } from "../services/diff-utils";
 import { toFindingDto, toReviewDto } from "../services/dto";
 import { getRunSession, listRuns } from "../services/run-log";
@@ -23,13 +23,14 @@ function loadFindings(id: string): FindingRow[] {
 }
 
 reviewsRouter.post("/reviews", async (req, res) => {
-  const { repo, number, skills, model, effort, challengeExisting } = req.body as {
+  const { repo, number, skills, model, effort, challengeExisting, instructions } = req.body as {
     repo?: string;
     number?: number;
     skills?: string[];
     model?: string;
     effort?: string;
     challengeExisting?: boolean;
+    instructions?: string;
   };
   rlog(`POST /reviews body=${JSON.stringify({ repo, number, skills, model, effort, challengeExisting })}`);
 
@@ -47,7 +48,8 @@ reviewsRouter.post("/reviews", async (req, res) => {
       Array.isArray(skills) ? skills : [],
       model || undefined,
       effort || undefined,
-      challengeExisting !== false
+      challengeExisting !== false,
+      cleanInstructions(instructions)
     );
     rlog(`review started: id=${id}`);
     res.status(202).json({ id });
