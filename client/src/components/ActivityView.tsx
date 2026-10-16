@@ -7,6 +7,7 @@ import { Input, Select } from "./ui/Field";
 import Icon from "./ui/Icon";
 import { CardSkeleton } from "./ui/Skeleton";
 import { ShellActions } from "./AppShell";
+import type { FindingOutcomeCounts, FindingQualitySummaryDto, JevVerdictRow } from "../../../shared/types";
 
 export interface ActivitySearch {
   days?: number;
@@ -30,6 +31,7 @@ interface Summary {
   byRepo: (RunTotals & { repo: string })[];
   byModel: (RunTotals & { model: string; effort: string })[];
   events: { kind: string; count: number; errors: number; avgDurationMs: number | null }[];
+  findings: FindingQualitySummaryDto;
 }
 
 interface EventRow {
@@ -145,6 +147,7 @@ export default function ActivityView({ search, onSearchChange }: { search: Activ
           <RunTable title="By day" rows={summary.byDay} first={{ label: "Day", get: (r) => r.day }} />
           <RunTable title="By repository" rows={summary.byRepo} first={{ label: "Repository", get: (r) => r.repo }} />
           <RunTable title="By model and effort" rows={summary.byModel} first={{ label: "Model · effort", get: (r) => `${r.model} · ${r.effort}` }} />
+          <FindingOutcomes findings={summary.findings} />
           <Card className="overflow-hidden">
             <Band>Events by kind</Band>
             <table className="w-full text-[13px]">
@@ -283,6 +286,126 @@ function RunTable<R extends RunTotals>({ title, rows, first }: { title: string; 
             </tr>
           ))}
           {rows.length === 0 && <EmptyRow cols={7} />}
+        </tbody>
+      </table>
+    </Card>
+  );
+}
+
+const VERDICTS: Record<JevVerdictRow["verdict"], string> = {
+  nit: "Jev: nit",
+  "nit-uncertain": "Jev: nit? (uncertain)",
+  "not-nit": "Jev: not a nit",
+  fails: "Jev: does not hold",
+  "holds-uncertain": "Jev: holds? (uncertain)",
+  holds: "Jev: holds",
+  unjudged: "Not judged by Jev",
+};
+
+/** What reviewers did with the findings of the period, then how Jev's verdicts line up with it. */
+function FindingOutcomes({ findings }: { findings: FindingQualitySummaryDto }) {
+  const t = findings.totals;
+  const { jev } = findings;
+  return (
+    <>
+      <section aria-label="Findings" className="grid grid-cols-[repeat(auto-fill,minmax(170px,1fr))] gap-3">
+        <Tile label="Findings" value={compact(t.total)} />
+        <Tile label="Posted" value={pct(t.posted, t.total)} note={`${t.posted} of ${t.total}`} />
+        <Tile label="Dismissed" value={pct(t.dismissed, t.total)} note={`${t.dismissed} of ${t.total}`} />
+        <Tile label="Resolved by a commit" value={pct(t.resolved, t.total)} note={`${t.resolved} of ${t.total}`} />
+        <Tile label="Still open" value={pct(t.open, t.total)} note={`${t.open} of ${t.total}`} />
+      </section>
+      <OutcomeTable title="Findings by severity" rows={findings.bySeverity} first={{ label: "Severity", get: (r) => r.severity }} />
+      <OutcomeTable title="Findings by model and effort" rows={findings.byModel} first={{ label: "Model · effort", get: (r) => `${r.model} · ${r.effort}` }} />
+      <OutcomeTable title="Findings by repository" rows={findings.byRepo} first={{ label: "Repository", get: (r) => r.repo }} />
+      <OutcomeTable
+        title={`Jev verdicts against reviewer decisions · ${jev.judged} of ${t.total} judged`}
+        rows={jev.verdicts}
+        first={{ label: "Verdict", get: (r) => VERDICTS[r.verdict] }}
+        decided
+        note={`${
+          jev.enabled ? "Jev judges each new finding once its review reports." : "Jev is off: set TYPESAFE_API_KEY on the server to have each new finding judged."
+        } A probability of ${jev.thresholds.yes} or more reads as yes, ${jev.thresholds.no} or less as no, anything between as uncertain. A finding Jev could not judge is not judged, never a no. Each finding counts once in the nit rows and once in the holds rows.`}
+      />
+      {jev.byDecision.length > 0 && (
+        <Card className="overflow-hidden">
+          <Band>Jev's mean probabilities by reviewer decision</Band>
+          <table className="w-full text-[13px]">
+            <thead>
+              <tr>
+                <Th>Decision</Th>
+                <Th right>Judged</Th>
+                <Th right>Nit</Th>
+                <Th right>Holds</Th>
+                <Th right>Severity (0–4)</Th>
+              </tr>
+            </thead>
+            <tbody>
+              {jev.byDecision.map((d) => (
+                <tr key={d.state}>
+                  <Td mono>{d.state}</Td>
+                  <Td right>{d.judged}</Td>
+                  <Td right>{d.meanNit.toFixed(2)}</Td>
+                  <Td right>{d.meanHolds.toFixed(2)}</Td>
+                  <Td right>{d.meanSeverity.toFixed(2)}</Td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
+      )}
+    </>
+  );
+}
+
+function OutcomeTable<R extends FindingOutcomeCounts>({
+  title,
+  rows,
+  first,
+  decided,
+  note,
+}: {
+  title: string;
+  rows: R[];
+  first: { label: string; get: (r: R) => string };
+  /** Adds the share of dismissed findings among those the reviewer decided on (posted or dismissed). */
+  decided?: boolean;
+  note?: string;
+}) {
+  const cell = (part: number, whole: number) => (
+    <>
+      {pct(part, whole)} <span className="font-mono text-[11px] text-fg-3">{part}</span>
+    </>
+  );
+  return (
+    <Card className="overflow-hidden">
+      <Band>{title}</Band>
+      {note && <p className="edge-soft-b px-5 py-2 text-xs text-fg-3">{note}</p>}
+      <table className="w-full text-[13px]">
+        <thead>
+          <tr>
+            <Th>{first.label}</Th>
+            <Th right>Findings</Th>
+            <Th right>Posted</Th>
+            <Th right>Dismissed</Th>
+            <Th right>Resolved</Th>
+            <Th right>Still open</Th>
+            {decided && <Th right>Dismissed of decided</Th>}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={first.get(r)}>
+              <Td mono>{first.get(r)}</Td>
+              <Td right>{r.total}</Td>
+              <Td right>{cell(r.posted, r.total)}</Td>
+              <Td right>{cell(r.dismissed, r.total)}</Td>
+              <Td right>{cell(r.resolved, r.total)}</Td>
+              <Td right>{cell(r.open, r.total)}</Td>
+              {decided && <Td right>{cell(r.dismissed, r.posted + r.dismissed)}</Td>}
+            </tr>
+          ))}
+          {rows.length === 0 && <EmptyRow cols={decided ? 7 : 6} />}
         </tbody>
       </table>
     </Card>

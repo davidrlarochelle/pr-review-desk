@@ -268,3 +268,33 @@ export interface CompareSummaryDto {
   commits: { sha: string; message: string; author: string }[];
   files: { path: string; additions: number; deletions: number }[];
 }
+
+/** What the reviewer did with a set of findings. `resolved` = fixed by a later commit. */
+export interface FindingOutcomeCounts {
+  total: number;
+  open: number;
+  posted: number;
+  dismissed: number;
+  resolved: number;
+}
+
+/** Jev's verdict on a set of findings, against what the reviewer did with them. */
+export interface JevVerdictRow extends FindingOutcomeCounts {
+  verdict: "nit" | "not-nit" | "nit-uncertain" | "fails" | "holds" | "holds-uncertain" | "unjudged";
+}
+
+export interface FindingQualitySummaryDto {
+  totals: FindingOutcomeCounts;
+  bySeverity: (FindingOutcomeCounts & { severity: string })[];
+  byModel: (FindingOutcomeCounts & { model: string; effort: string })[];
+  byRepo: (FindingOutcomeCounts & { repo: string })[];
+  jev: {
+    enabled: boolean;
+    judged: number;
+    /** A Noul at or above `yes` reads as yes, at or below `no` as no; between, uncertain. */
+    thresholds: { yes: number; no: number };
+    verdicts: JevVerdictRow[];
+    /** Jev's mean probabilities for each reviewer decision, to tune the thresholds on. */
+    byDecision: { state: string; judged: number; meanNit: number; meanHolds: number; meanSeverity: number }[];
+  };
+}

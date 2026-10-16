@@ -97,6 +97,30 @@ function addMissingColumns(database: Database.Database, table: string, columns: 
   }
 }
 
+/**
+ * Which run produced a finding, and Jev's raw answers about it (probabilities, not verdicts: thresholds are
+ * applied when reading, so they can be tuned on our data). Additive: a verdict lives in its own table.
+ */
+export function migrateFindingQuality(database: Database.Database): void {
+  addMissingColumns(database, "findings", { run_id: "TEXT" });
+  database.exec(`
+    CREATE TABLE IF NOT EXISTS finding_judgments (
+      finding_id TEXT PRIMARY KEY,
+      review_id TEXT NOT NULL,
+      judged_at TEXT NOT NULL,
+      model TEXT,
+      nit REAL,
+      holds REAL,
+      severity_score REAL,
+      severity_confidence REAL,
+      severity_probabilities TEXT,
+      input_tokens INTEGER,
+      output_tokens INTEGER
+    );
+    CREATE INDEX IF NOT EXISTS judgments_by_review ON finding_judgments (review_id);
+  `);
+}
+
 export function getDb(): Database.Database {
   if (instance) return instance;
 
@@ -112,5 +136,6 @@ export function getDb(): Database.Database {
     omitted_files: "TEXT NOT NULL DEFAULT '[]'",
     truncated_files: "TEXT NOT NULL DEFAULT '[]'",
   });
+  migrateFindingQuality(instance);
   return instance;
 }
