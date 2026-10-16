@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // A fake GitHub CLI for the e2e world. The server under test finds it first on PATH and gets
 // answers from e2e/fixtures/github.json, never from GitHub. Every call goes to gh-calls.jsonl,
-// every write (POST) to gh-writes.jsonl, both in $E2E_WORLD, where the tests read them.
+// every write (POST) to gh-writes.jsonl, every refusal to gh-failures.jsonl, all in $E2E_WORLD,
+// where the tests read them.
 // A command this file does not know fails loudly instead of reaching anything real.
 
 import fs from "node:fs";
@@ -22,6 +23,7 @@ function append(file, entry) {
 }
 
 function fail(message) {
+  if (WORLD) append("gh-failures.jsonl", { args, message });
   process.stderr.write(`fake gh: ${message}\n`);
   process.exit(1);
 }
@@ -33,7 +35,7 @@ function out(value) {
 
 /** The flags gh takes, split into the positionals and the repeated -f/-F fields. */
 function parse(argv) {
-  const takesValue = new Set(["-R", "--repo", "-X", "--method", "-H", "--header", "-q", "--jq", "--json", "--state", "--limit", "-f", "--raw-field", "-F", "--field"]);
+  const takesValue = new Set(["--review-requested", "--author", "-R", "--repo", "-X", "--method", "-H", "--header", "-q", "--jq", "--json", "--state", "--limit", "-f", "--raw-field", "-F", "--field"]);
   const positionals = [];
   const fields = {};
   const flags = {};
@@ -128,6 +130,10 @@ function api({ positionals, fields, flags }) {
 
   if (endpoint === "user") return out({ login: github.viewer });
   if (endpoint.startsWith("user/repos")) return out(github.repos.join("\n") + "\n");
+  if (endpoint === "graphql" && fields.owner !== undefined) {
+    // The discussion of one PR (reviews, conversation, threads): nobody has said anything yet.
+    return out({ data: { repository: { pullRequest: { reviews: { nodes: [] }, comments: { nodes: [] }, reviewThreads: { nodes: [] } } } } });
+  }
   if (endpoint === "graphql") {
     const org = String(fields.q ?? "").match(/org:(\S+)/)?.[1];
     const nodes = Object.entries(github.pullRequests)
@@ -141,7 +147,7 @@ function api({ positionals, fields, flags }) {
     return out({ data: { search: { nodes, pageInfo: { hasNextPage: false, endCursor: null } } } });
   }
 
-  let m = endpoint.match(/^repos\/([^/]+\/[^/]+)\/pulls\/(\d+)\/(reviews|comments)$/);
+  let m = endpoint.match(/^repos\/([^/]+\/[^/]+)\/pulls\/(\d+)\/(reviews|comments)(\?.*)?$/);
   if (m) return out([]);
   m = endpoint.match(/^repos\/([^/]+\/[^/]+)(?:\/(tags|branches|deployments|compare)\b.*)?$/);
   if (m) {
@@ -179,5 +185,6 @@ const command = parsed.positionals[0];
 if (args[0] === "--version") out("gh version 0.0.0-e2e (fake)\n");
 if (command === "api") api(parsed);
 else if (command === "pr") pr(parsed);
+else if (command === "search" && parsed.positionals[1] === "prs") out([]); // no review requested from the viewer
 else if (command === "auth") out("Logged in to github.com as e2e-reviewer (fake)\n");
 else fail(`unhandled command: gh ${args.join(" ")}`);

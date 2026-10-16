@@ -12,6 +12,7 @@ import type { Browser } from "@e2e-dev/web";
 import {
   claudeCalls,
   findingByTitle,
+  ghFailures,
   ghWrites,
   holdClaude,
   releaseClaude,
@@ -45,6 +46,7 @@ export async function pickReposOnFirstLaunch({ app, agent, screen }: Desk): Prom
   await expect(screen.getByRole("button", PR.title)).toBeVisible();
   await expect(screen.getByRole("button", "Bump the date library")).toBeVisible();
   expect(selectedRepos()).toEqual([PR.repo]);
+  expect(ghFailures()).toEqual([]);
 }
 
 /** 2. Open a PR, start a review, see it running, then its findings once it reports. */
@@ -67,6 +69,7 @@ export async function reviewPullRequest({ app, agent, screen }: Desk): Promise<v
   expect(reviewStatus(`${PR.repo}#${PR.number}`)).toBe("reported");
   expect(claudeCalls().map((c) => c.report)).toEqual(["report-pr.json"]);
   expect(ghWrites()).toEqual([]);
+  expect(ghFailures()).toEqual([]);
 }
 
 /** 3. Edit a finding's comment and post it: the fake gh must receive that text, on that file and those lines. */
@@ -95,6 +98,7 @@ export async function editAndPostComment({ app, agent, screen }: Desk): Promise<
   const finding = findingByTitle(HIGH);
   expect(finding?.state).toBe("posted");
   expect(finding?.draft_comment).toBe(body);
+  expect(ghFailures()).toEqual([]);
 }
 
 /** 4. Dismiss a finding, then reopen it; each state survives a reload. */
@@ -121,6 +125,7 @@ export async function dismissThenReopen({ app, agent, screen, browser }: Desk): 
   await browser.reload();
   await expect(screen.getByRole("button", /^dismiss$/i)).toBeVisible();
   expect(ghWrites()).toEqual([]);
+  expect(ghFailures()).toEqual([]);
 }
 
 /** 5. Review a local branch of the checkout the harness made (sample-app, feat/divide against main). */
@@ -143,4 +148,28 @@ export async function reviewLocalBranch({ app, agent, screen }: Desk): Promise<v
   await expect(screen.getByRole("button", /dividing by zero returns infinity/i)).toBeVisible();
   expect(reviewsLike("local/sample-app-%").map((r) => r.status)).toEqual(["reported"]);
   expect(claudeCalls().map((c) => c.report)).toEqual(["report-local.json"]);
+  expect(ghFailures()).toEqual([]);
+}
+
+/** 7. Instructions typed before a review reach the agent: the prompt the fake claude got holds them. */
+export async function reviewWithInstructions({ app, agent, screen }: Desk): Promise<void> {
+  resetWorld({ repos: [PR.repo] });
+  await app.open(`/prs/${PR.repo}/${PR.number}`);
+  await expect(screen.getByRole("heading", { name: /add retry to the payment client/i, level: 1 })).toBeVisible();
+
+  // The exact text is the point of the test: typed in code, not by the agent.
+  const instructions = "Focus on idempotency: can a retried charge bill the customer twice? Leave naming alone.";
+  await screen.getByLabel(/instructions for the review agent/i).fill(instructions);
+
+  holdClaude();
+  await agent.act("start a review of this pull request");
+  await expect(screen.getByRole("button", /review running/i)).toBeVisible();
+  releaseClaude();
+  await expect(screen.getByText(/^reported$/i)).toBeVisible({ timeout: 15_000 });
+
+  const calls = claudeCalls();
+  expect(calls).toHaveLength(1);
+  const section = calls[0].prompt.split("## Consignes du relecteur")[1]?.split("\n## ")[0] ?? "";
+  expect(section).toContain(instructions);
+  expect(ghFailures()).toEqual([]);
 }

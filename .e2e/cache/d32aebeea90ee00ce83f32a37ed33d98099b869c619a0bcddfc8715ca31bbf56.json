@@ -1,6 +1,6 @@
 {
   "schemaVersion": "trace-1",
-  "createdAt": "2026-10-16T01:56:21.902Z",
+  "createdAt": "2026-10-16T02:06:25.207Z",
   "payload": {
     "actions": [
       {
@@ -24,9 +24,9 @@
       "callIndex": 0,
       "agent": "default"
     },
-    "summary": "Tapped Dismiss. The finding's status changed from \"open\" to \"dismissed\", and the button now reads \"Reopen\".",
-    "startPath": "/prs/acme/widgets/42/findings/0dbc6a84-a7ea-4af5-bf6a-0c6f590a10cc",
-    "endPath": "/prs/acme/widgets/42/findings/0dbc6a84-a7ea-4af5-bf6a-0c6f590a10cc",
+    "summary": "I dismissed the finding \"Name the retry limit\" by tapping its Dismiss button. Its status changed from \"open\" to \"dismissed\", and the Dismiss button became \"Reopen\".",
+    "startPath": "/prs/acme/widgets/42/findings/79e856da-e09b-4204-b2ab-de36ec56fcf7",
+    "endPath": "/prs/acme/widgets/42/findings/79e856da-e09b-4204-b2ab-de36ec56fcf7",
     "endAnchors": [
       {
         "text": "dismissed"
@@ -45,7 +45,7 @@
         "name": "Dismiss"
       }
     ],
-    "endWaitMs": 12609,
+    "endWaitMs": 13262,
     "keyedBy": {
       "cacheSchema": "trace-1",
       "policyVersion": "conservative/6",

@@ -1,6 +1,6 @@
 {
   "schemaVersion": "trace-1",
-  "createdAt": "2026-10-16T01:56:50.100Z",
+  "createdAt": "2026-10-16T02:07:00.549Z",
   "payload": {
     "actions": [
       {
@@ -24,7 +24,7 @@
       "callIndex": 0,
       "agent": "default"
     },
-    "summary": "The review on PR #42 started. After I clicked \"Start Review\", the button changed to a disabled \"Review running…\" button and a \"Running\" status appeared, timestamped \"just now\". The model, effort and skills controls were disabled. An empty Findings panel appeared with the message \"Findings will appe…",
+    "summary": "I clicked \"Start Review\" on PR #42 and the review started. The status now reads \"Running\" (started \"just now\"), the button changed to \"Review running…\" and is disabled, and the model, effort, skills and instructions fields are locked. A Findings section appeared with 0 findings and the note \"Findin…",
     "startPath": "/prs/acme/widgets/42",
     "endPath": "/prs/acme/widgets/42",
     "endAnchors": [
@@ -63,7 +63,7 @@
         "name": "Start Review"
       }
     ],
-    "endWaitMs": 12995,
+    "endWaitMs": 13023,
     "keyedBy": {
       "cacheSchema": "trace-1",
       "policyVersion": "conservative/6",

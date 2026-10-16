@@ -46,15 +46,21 @@ export function resetWorld({ repos }: { repos?: string[] } = {}): void {
     if (repos) db.prepare("INSERT INTO settings (key, value) VALUES ('selected_repos', ?)").run(JSON.stringify(repos));
     db.exec("COMMIT");
   });
-  for (const journal of ["gh-writes.jsonl", "claude-calls.jsonl"]) fs.writeFileSync(path.join(WORLD, journal), "");
+  for (const journal of ["gh-calls.jsonl", "gh-writes.jsonl", "gh-failures.jsonl", "claude-calls.jsonl"]) fs.writeFileSync(path.join(WORLD, journal), "");
   releaseClaude();
 }
 
 /** What the Desk sent to GitHub: every POST the fake gh received, in order, without its timestamp. */
 export const ghWrites = (): GhWrite[] => readJsonl<GhWrite & { at: string }>("gh-writes.jsonl").map(({ at: _at, ...write }) => write);
 
-/** Every run of the fake claude, in order. */
-export const claudeCalls = () => readJsonl<{ args: string[]; report: string }>("claude-calls.jsonl");
+/** Every command the fake gh received, reads included, as its argument list. */
+export const ghCalls = (): string[][] => readJsonl<{ args: string[] }>("gh-calls.jsonl").map((c) => c.args);
+
+/** The commands the fake gh did not know and refused: a flow that reaches one is outside the closed world. */
+export const ghFailures = () => readJsonl<{ args: string[]; message: string }>("gh-failures.jsonl");
+
+/** Every run of the fake claude, in order, with the prompt it was sent. */
+export const claudeCalls = () => readJsonl<{ args: string[]; prompt: string; report: string }>("claude-calls.jsonl");
 
 /** Keeps the next reviews running until releaseClaude(). */
 export const holdClaude = () => fs.writeFileSync(path.join(WORLD, "claude-hold"), "");
@@ -75,17 +81,23 @@ export const reviewsLike = (pattern: string): { id: string; status: string }[] =
 export const findingByTitle = (title: string): FindingRow | undefined =>
   withDb((db) => db.prepare("SELECT id, title, state, draft_comment, comment_url FROM findings WHERE title = ?").get(title) as unknown as FindingRow | undefined);
 
+/** A call to the Desk's API as its own page makes it (same Origin, so writes are accepted). */
+export async function api<T = unknown>(method: string, route: string, body?: unknown): Promise<T> {
+  const res = await fetch(`${APP_URL}${route}`, {
+    method,
+    headers: { "content-type": "application/json", origin: APP_URL },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`${method} ${route}: ${res.status} ${await res.text()}`);
+  return (await res.json()) as T;
+}
+
 /**
  * A finished review of a pull request, made through the API as the page would (same Origin),
  * for the flows that start from findings rather than from the review itself.
  */
 export async function seedReview(repo: string, number: number): Promise<void> {
-  const res = await fetch(`${APP_URL}/api/reviews`, {
-    method: "POST",
-    headers: { "content-type": "application/json", origin: APP_URL },
-    body: JSON.stringify({ repo, number }),
-  });
-  if (!res.ok) throw new Error(`seedReview: ${res.status} ${await res.text()}`);
+  await api("POST", "/api/reviews", { repo, number });
   const id = `${repo}#${number}`;
   const deadline = Date.now() + 15_000;
   while (reviewStatus(id) !== "reported") {

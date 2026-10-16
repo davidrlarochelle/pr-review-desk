@@ -1,6 +1,6 @@
 {
   "schemaVersion": "trace-1",
-  "createdAt": "2026-10-16T01:57:19.217Z",
+  "createdAt": "2026-10-16T02:07:30.789Z",
   "payload": {
     "actions": [
       {
@@ -28,9 +28,9 @@
       "callIndex": 0,
       "agent": "default"
     },
-    "summary": "I tapped \"Post comment\" in the comment panel and the comment was posted. The finding's status changed from \"open\" to \"posted\", and a \"Comment posted on #42\" notification appeared. The panel now reads \"Posted as comment\" with a \"View on GitHub\" link. The header button now reads \"Posted\", and the com…",
-    "startPath": "/prs/acme/widgets/42/findings/dbdbabb3-f409-4d3e-bf7f-a4ecbbdda856",
-    "endPath": "/prs/acme/widgets/42/findings/dbdbabb3-f409-4d3e-bf7f-a4ecbbdda856",
+    "summary": "The comment was posted. I clicked \"Post comment\" in the finding's Comment panel. The finding's status changed from \"open\" to \"posted\". The header button now reads \"Posted\" and is greyed out, and the comment editor is locked. The page shows \"Posted as comment\" with a timestamp and a \"View on GitHub\"…",
+    "startPath": "/prs/acme/widgets/42/findings/43aed2ce-82d6-4ce1-b7bd-bce37091efae",
+    "endPath": "/prs/acme/widgets/42/findings/43aed2ce-82d6-4ce1-b7bd-bce37091efae",
     "endAnchors": [
       {
         "role": "status",
@@ -77,7 +77,7 @@
         "name": "Reset to suggested"
       }
     ],
-    "endWaitMs": 13040,
+    "endWaitMs": 12917,
     "keyedBy": {
       "cacheSchema": "trace-1",
       "policyVersion": "conservative/6",

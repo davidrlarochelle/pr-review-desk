@@ -1,6 +1,6 @@
 {
   "schemaVersion": "trace-1",
-  "createdAt": "2026-10-16T01:56:39.606Z",
+  "createdAt": "2026-10-16T02:06:50.485Z",
   "payload": {
     "actions": [
       {
@@ -24,7 +24,7 @@
       "callIndex": 0,
       "agent": "default"
     },
-    "summary": "I tapped Start review and the review started. A notification reads \"Review started for feat/divide\", and the button now reads \"Review running…\" and is greyed out. Review history went from 0 to 1 review, showing feat/divide → main with status Running.",
+    "summary": "I pressed Start review and the review started. The button changed to \"Review running…\" and was disabled, and a \"Review started for feat/divide\" notification appeared. The review history now lists 1 review, feat/divide → main, with status Running.",
     "startPath": "/local/sample-app?branch=feat%2Fdivide&base=main",
     "endPath": "/local/sample-app?branch=feat%2Fdivide&base=main",
     "endAnchors": [
@@ -72,7 +72,7 @@
         "text": "Start a review on a branch above to see it here."
       }
     ],
-    "endWaitMs": 12543,
+    "endWaitMs": 12731,
     "keyedBy": {
       "cacheSchema": "trace-1",
       "policyVersion": "conservative/6",

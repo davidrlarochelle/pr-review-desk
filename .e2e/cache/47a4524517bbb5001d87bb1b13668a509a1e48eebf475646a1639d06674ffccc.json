@@ -1,6 +1,6 @@
 {
   "schemaVersion": "trace-1",
-  "createdAt": "2026-10-16T01:56:21.901Z",
+  "createdAt": "2026-10-16T02:06:25.206Z",
   "payload": {
     "actions": [
       {
@@ -24,9 +24,9 @@
       "callIndex": 0,
       "agent": "default"
     },
-    "summary": "Opened finding detail page with heading \"Name the retry limit\" (Finding 2 of 2).",
+    "summary": "The finding \"Name the retry limit\" opened. I tapped it, and the app went to its detail page (/findings/79e856da-…). The page shows the heading \"Name the retry limit\", marked Nit, readability and open, at src/payments/client.ts:18, along with its comment panel and the diff.",
     "startPath": "/prs/acme/widgets/42",
-    "endPath": "/prs/acme/widgets/42/findings/0dbc6a84-a7ea-4af5-bf6a-0c6f590a10cc",
+    "endPath": "/prs/acme/widgets/42/findings/79e856da-e09b-4204-b2ab-de36ec56fcf7",
     "endAnchors": [
       {
         "role": "button",
@@ -87,7 +87,7 @@
         "text": "feat/payment-retry"
       }
     ],
-    "endWaitMs": 12520,
+    "endWaitMs": 13069,
     "keyedBy": {
       "cacheSchema": "trace-1",
       "policyVersion": "conservative/6",

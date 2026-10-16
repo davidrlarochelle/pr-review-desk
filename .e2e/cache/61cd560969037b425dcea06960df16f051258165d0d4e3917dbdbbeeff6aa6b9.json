@@ -1,6 +1,6 @@
 {
   "schemaVersion": "trace-1",
-  "createdAt": "2026-10-16T01:56:06.657Z",
+  "createdAt": "2026-10-16T02:06:09.259Z",
   "payload": {
     "actions": [
       {
@@ -24,9 +24,9 @@
       "callIndex": 0,
       "agent": "default"
     },
-    "summary": "The finding opened. I tapped \"Retrying a charge can bill the customer twice\" in the findings list on widgets #42, and the app went to its detail page (/prs/acme/widgets/42/findings/b0712375-…). The page shows that title as its heading, labelled High, correctness and open, \"Finding 1 of 2\". It also …",
+    "summary": "Finding detail page opened, heading reads \"Retrying a charge can bill the customer twice\" (Finding 1 of 2).",
     "startPath": "/prs/acme/widgets/42",
-    "endPath": "/prs/acme/widgets/42/findings/b0712375-43b6-4537-80c6-6ff2ef3e9a7d",
+    "endPath": "/prs/acme/widgets/42/findings/a21c120d-1cde-4fcf-a8a8-573f0b66f3db",
     "endAnchors": [
       {
         "role": "button",
@@ -87,7 +87,7 @@
         "text": "feat/payment-retry"
       }
     ],
-    "endWaitMs": 13457,
+    "endWaitMs": 25845,
     "keyedBy": {
       "cacheSchema": "trace-1",
       "policyVersion": "conservative/6",

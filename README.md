@@ -140,7 +140,7 @@ Logs: `docker compose logs -f app`.
 
 ## Developing
 
-Needs Node 22.9 or later (`.nvmrc`), plus `gh` and `claude` installed on your machine, since the server calls them directly.
+Needs Node 22.22.3 or later, plus `gh` and `claude` installed on your machine, since the server calls them directly. The end-to-end tests need Node 24 (`.nvmrc`: `nvm use`). After switching Node versions, run `npm rebuild better-sqlite3`: its native module is built for one version.
 
 ```bash
 npm install
@@ -152,10 +152,10 @@ In dev mode the server calls your own `gh` and `claude`, so their logins are use
 
 ### End-to-end tests
 
-The user flows run in a browser with [e2e](https://e2e.tester.army/docs/quickstart.md), against a closed world: fake `gh` and `claude` (`e2e/harness/bin/`) answer from `e2e/fixtures/`, so no test reaches GitHub or a model through the app, and nothing is ever posted. Each run starts the production build on port 3203 with a fresh database in a temporary folder, deleted at the end.
+The user flows run in a browser with [e2e](https://e2e.tester.army/docs/quickstart.md), against a closed world: fake `gh` and `claude` (`e2e/harness/bin/`) answer from `e2e/fixtures/`, so no test reaches GitHub or a model through the app, and nothing is ever posted. The GitHub poller gets its answers from the same fake `gh`, and the server starts without `TYPESAFE_API_KEY`, so Jev stays off. Each run starts the production build on port 3203 with a fresh database in a temporary folder, deleted at the end.
 
 ```bash
-npm run test:e2e        # builds, then runs every flow; needs Node 24.8+ (or 22.22.3+)
+npm run test:e2e        # builds, then runs every flow (Node 24)
 npx e2e run e2e/tests/findings.e2e.ts --headed   # one file, in a visible browser
 ```
 

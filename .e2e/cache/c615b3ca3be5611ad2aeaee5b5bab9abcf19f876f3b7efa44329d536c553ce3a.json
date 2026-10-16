@@ -1,6 +1,6 @@
 {
   "schemaVersion": "trace-1",
-  "createdAt": "2026-10-16T01:57:07.252Z",
+  "createdAt": "2026-10-16T02:07:18.899Z",
   "payload": {
     "actions": [
       {
@@ -24,7 +24,7 @@
       "callIndex": 0,
       "agent": "default"
     },
-    "summary": "I tapped \"Start Review\" and a review started. The button now reads \"Review running…\" and is disabled, and a \"Running\" status appeared, marked \"just now\". The Model, Effort and Skills controls are locked, and a Findings section showing 0 says findings will appear as the review progresses. The step o…",
+    "summary": "The review started. After I tapped \"Start Review\", the button changed to \"Review running…\" and is disabled, and the page shows a \"Running\" status dated \"just now\". The Findings section appeared with 0 findings and the message \"Findings will appear here as the review progresses.\"",
     "startPath": "/prs/acme/widgets/42",
     "endPath": "/prs/acme/widgets/42",
     "endAnchors": [
@@ -63,7 +63,7 @@
         "name": "Start Review"
       }
     ],
-    "endWaitMs": 13063,
+    "endWaitMs": 12786,
     "keyedBy": {
       "cacheSchema": "trace-1",
       "policyVersion": "conservative/6",
