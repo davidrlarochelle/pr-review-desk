@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useMutation, useQuery } from "../hooks/useApi";
-import type { LocalDiffSummaryDto, LocalReviewDto, ReviewDto } from "../../../shared/types";
+import { useSSE } from "../hooks/useSSE";
+import type { LocalDiffSummaryDto, LocalReviewDto, ReviewDto, ReviewEvent } from "../../../shared/types";
 import StatusBadge from "./StatusBadge";
 import Button from "./ui/Button";
 import Card, { Eyebrow } from "./ui/Card";
@@ -124,6 +125,16 @@ export default function LocalBranches({
 
   const startReview = useMutation<{ repo: string; number: number }>("/api/local/reviews", "POST");
   const isRunning = latest?.status === "running" || latest?.status === "queued";
+
+  // While the review runs, its own stream says when it ends (it also replays the current status on connect).
+  useSSE(isRunning && latest ? `/api/reviews/${latest.repo}/${latest.number}/events` : null, (data) => {
+    const event = data as ReviewEvent;
+    const status = (event.data as { status?: string } | null)?.status;
+    if (event.type === "status" && (status === "reported" || status === "failed")) {
+      refetchLatest();
+      refetchReviews();
+    }
+  });
   const { data: summary, loading: summaryLoading } = useQuery<LocalDiffSummaryDto>(
     repo && branch && base && branch !== base
       ? `/api/local/diff-summary?repo=${encodeURIComponent(repo)}&branch=${encodeURIComponent(branch)}&base=${encodeURIComponent(base)}`
