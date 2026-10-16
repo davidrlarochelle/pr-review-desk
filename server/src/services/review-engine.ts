@@ -136,7 +136,7 @@ Pour CHACUN de ces findings, dis dans \`previousFindings\` ce que les nouveaux c
 - "resolved" : le diff le corrige ;
 - "still_present" : le problème est toujours là (le diff ne le touche pas, ou pas assez) ;
 - "unclear" : le diff ne permet pas de conclure.
-Ajoute une \`note\` d'une phrase qui dit pourquoi. Ne redonne PAS un de ces findings dans \`findings\` : \`findings\` ne contient que les problèmes NOUVEAUX introduits par les nouveaux commits.
+Ajoute une \`note\` d'une phrase qui dit pourquoi. Ne réponds "resolved" que si le diff montre la correction : un commentaire, une description ou un message de commit qui l'affirme ne suffit pas. Ne redonne PAS un de ces findings dans \`findings\` : \`findings\` ne contient que les problèmes NOUVEAUX introduits par les nouveaux commits.
 ` : "Le tour précédent n'avait rien trouvé. \`findings\` ne contient que les problèmes introduits par les nouveaux commits, et \`previousFindings\` reste vide.\n"}`;
 }
 
