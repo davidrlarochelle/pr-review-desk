@@ -43,7 +43,6 @@ describe("findingOutcomeRows", () => {
   });
 
   it("falls back only to runs finished before the finding's creation when findings carry created_at", () => {
-    db.exec("ALTER TABLE findings ADD COLUMN created_at TEXT");
     review("o/r#1");
     run("before", "o/r#1", "opus", "thorough", "reported", "2026-10-02T00:00:00Z");
     run("after", "o/r#1", "haiku", "quick", "reported", "2026-10-05T00:00:00Z");
