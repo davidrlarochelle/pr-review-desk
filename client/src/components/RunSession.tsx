@@ -76,7 +76,7 @@ export default function RunSession({
         <>
           <Card className="overflow-hidden">
             <div className="flex flex-wrap items-center gap-3 px-5 pb-4 pt-[18px]">
-              <h1 className="font-display text-[26px] uppercase leading-none">Review session</h1>
+              <h1 className="font-display text-[length:calc(26px*var(--font-scale))] uppercase leading-none">Review session</h1>
               <StatusBadge status={run.status} />
               <span className="font-mono text-xs text-fg-3" title={new Date(run.startedAt).toLocaleString()}>
                 started {relativeTime(run.startedAt)}
@@ -98,7 +98,7 @@ export default function RunSession({
             {run.instructions && (
               <div className="flex flex-col gap-1.5 edge-t px-5 py-3">
                 <span className="label-caps text-fg-3">Instructions for the agent</span>
-                <p className="whitespace-pre-wrap text-[13px] text-fg-2">{run.instructions}</p>
+                <p className="whitespace-pre-wrap text-[length:calc(13px*var(--font-scale))] text-fg-2">{run.instructions}</p>
               </div>
             )}
             {run.status === "failed" && run.error && (
@@ -107,7 +107,7 @@ export default function RunSession({
                   <Icon name="alert" className="size-3.5" />
                   Run failed
                 </Band>
-                <pre className="mx-5 my-3.5 whitespace-pre-wrap font-mono text-xs leading-[18px] text-danger-ink">{run.error}</pre>
+                <pre className="mx-5 my-3.5 whitespace-pre-wrap font-mono text-xs leading-[calc(18px*var(--font-scale))] text-danger-ink">{run.error}</pre>
               </div>
             )}
           </Card>
@@ -141,7 +141,7 @@ export default function RunSession({
 
           <section aria-label="Events" className="flex flex-col gap-3">
             <div className="flex items-baseline gap-3">
-              <h2 className="font-display text-[22px] uppercase leading-none">Events</h2>
+              <h2 className="font-display text-[length:calc(22px*var(--font-scale))] uppercase leading-none">Events</h2>
               <span className="font-mono text-xs text-fg-3">
                 {session.events.length}
                 {running ? " · following the run" : ""}
@@ -167,7 +167,7 @@ function Stat({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="flex flex-col gap-1 edge-soft-r px-5 py-3 last:border-r-0">
       <dt className="label-caps text-fg-3">{label}</dt>
-      <dd className="truncate font-mono text-[13px] text-fg">{value}</dd>
+      <dd className="truncate font-mono text-[length:calc(13px*var(--font-scale))] text-fg">{value}</dd>
     </div>
   );
 }
@@ -178,7 +178,7 @@ function formatDuration(ms: number) {
 }
 
 function Pre({ children }: { children: ReactNode }) {
-  return <pre className="max-h-[480px] overflow-auto whitespace-pre-wrap break-words px-5 py-3.5 font-mono text-xs leading-[19px] text-fg-2">{children}</pre>;
+  return <pre className="max-h-[480px] overflow-auto whitespace-pre-wrap break-words px-5 py-3.5 font-mono text-xs leading-[calc(19px*var(--font-scale))] text-fg-2">{children}</pre>;
 }
 
 /** `nested` sits inside an event card, so it only draws the rule above it. */

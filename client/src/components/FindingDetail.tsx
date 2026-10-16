@@ -260,7 +260,7 @@ export default function FindingDetail({
             {finding.category && <Chip>{finding.category}</Chip>}
             <FindingStateBadge state={finding.state} />
           </div>
-          <h1 className="text-xl font-bold leading-[28px] tracking-[-0.015em]">{finding.title}</h1>
+          <h1 className="text-xl font-bold leading-[calc(28px*var(--font-scale))] tracking-[-0.015em]">{finding.title}</h1>
           {githubUrl ? (
             <a href={githubUrl} target="_blank" rel="noreferrer" className="inline-flex w-fit items-center gap-1.5 font-mono text-xs text-fg-2 hover:bg-acid hover:text-acid-fg focus-ring">
               <Icon name="file" className="size-3.5 text-fg-3" />
@@ -303,7 +303,7 @@ export default function FindingDetail({
             <Card className="flex flex-col">
               <div className="flex h-11 items-center gap-2 edge-b pl-4 pr-3">
                 <span className="label-caps">Comment</span>
-                <span className="font-mono text-[11px] text-fg-3">
+                <span className="font-mono text-[length:calc(11px*var(--font-scale))] text-fg-3">
                   {saveState === "saving" ? "saving…" : saveState === "saved" ? "draft saved" : finding.draftComment ? "edited" : "suggested"}
                 </span>
                 <div className="ml-auto">

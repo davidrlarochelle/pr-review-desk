@@ -110,7 +110,7 @@ export default function ActivityView({ search, onSearchChange }: { search: Activ
 
       <div className="flex items-end gap-3">
         <div className="flex flex-col gap-1.5">
-          <h1 className="font-display text-[34px] uppercase leading-none tracking-[0.01em]">Activity</h1>
+          <h1 className="font-display text-[length:calc(34px*var(--font-scale))] uppercase leading-none tracking-[0.01em]">Activity</h1>
           <span className="text-xs text-fg-3">Every review run, API call and click the app recorded. Times in UTC.</span>
         </div>
         <Select
@@ -150,7 +150,7 @@ export default function ActivityView({ search, onSearchChange }: { search: Activ
           <FindingOutcomes findings={summary.findings} />
           <Card className="overflow-hidden">
             <Band>Events by kind</Band>
-            <table className="w-full text-[13px]">
+            <table className="w-full text-[length:calc(13px*var(--font-scale))]">
               <thead>
                 <tr>
                   <Th>Kind</Th>
@@ -181,7 +181,7 @@ export default function ActivityView({ search, onSearchChange }: { search: Activ
 
       <Card className="overflow-hidden">
         <div className="flex flex-wrap items-center gap-2 edge-b px-5 py-3">
-          <span className="font-display text-[20px] uppercase leading-none">Events</span>
+          <span className="font-display text-[length:calc(20px*var(--font-scale))] uppercase leading-none">Events</span>
           <Select id="activity-kind" label="Kind" wrapperClassName="ml-auto w-44" value={kind} onChange={(e) => onSearchChange({ ...search, kind: e.target.value || undefined })}>
             <option value="">All</option>
             {KINDS.map((k) => (
@@ -199,7 +199,7 @@ export default function ActivityView({ search, onSearchChange }: { search: Activ
             <Input id="activity-q" icon="search" wrapperClassName="w-72" value={qDraft} onChange={(e) => setQDraft(e.target.value)} placeholder="Search name, payload, review…" />
           </form>
         </div>
-        <table className="w-full text-[13px]">
+        <table className="w-full text-[length:calc(13px*var(--font-scale))]">
           <thead>
             <tr>
               <Th>Time</Th>
@@ -224,7 +224,7 @@ export default function ActivityView({ search, onSearchChange }: { search: Activ
                   {Object.keys(e.payload).length > 0 ? (
                     <details>
                       <summary className="cursor-pointer font-mono text-xs text-fg-3 hover:text-fg focus-ring">{Object.keys(e.payload).slice(0, 4).join(", ")}</summary>
-                      <pre className="mt-1 max-h-64 max-w-[520px] overflow-auto whitespace-pre-wrap break-words font-mono text-[11px] text-fg-2">{JSON.stringify(e.payload, null, 2)}</pre>
+                      <pre className="mt-1 max-h-64 max-w-[520px] overflow-auto whitespace-pre-wrap break-words font-mono text-[length:calc(11px*var(--font-scale))] text-fg-2">{JSON.stringify(e.payload, null, 2)}</pre>
                     </details>
                   ) : (
                     "—"
@@ -251,8 +251,8 @@ function Tile({ label, value, note }: { label: string; value: string; note?: str
   return (
     <Card className="flex flex-col gap-1.5 px-4 py-3.5" flat>
       <span className="text-xs text-fg-3">{label}</span>
-      <span className="font-sans text-[26px] font-semibold leading-none text-fg">{value}</span>
-      {note && <span className="font-mono text-[11px] text-fg-3">{note}</span>}
+      <span className="font-sans text-[length:calc(26px*var(--font-scale))] font-semibold leading-none text-fg">{value}</span>
+      {note && <span className="font-mono text-[length:calc(11px*var(--font-scale))] text-fg-3">{note}</span>}
     </Card>
   );
 }
@@ -261,7 +261,7 @@ function RunTable<R extends RunTotals>({ title, rows, first }: { title: string; 
   return (
     <Card className="overflow-hidden">
       <Band>{title}</Band>
-      <table className="w-full text-[13px]">
+      <table className="w-full text-[length:calc(13px*var(--font-scale))]">
         <thead>
           <tr>
             <Th>{first.label}</Th>
@@ -330,7 +330,7 @@ function FindingOutcomes({ findings }: { findings: FindingQualitySummaryDto }) {
       {jev.byDecision.length > 0 && (
         <Card className="overflow-hidden">
           <Band>Jev's mean probabilities by reviewer decision</Band>
-          <table className="w-full text-[13px]">
+          <table className="w-full text-[length:calc(13px*var(--font-scale))]">
             <thead>
               <tr>
                 <Th>Decision</Th>
@@ -374,14 +374,14 @@ function OutcomeTable<R extends FindingOutcomeCounts>({
 }) {
   const cell = (part: number, whole: number) => (
     <>
-      {pct(part, whole)} <span className="font-mono text-[11px] text-fg-3">{part}</span>
+      {pct(part, whole)} <span className="font-mono text-[length:calc(11px*var(--font-scale))] text-fg-3">{part}</span>
     </>
   );
   return (
     <Card className="overflow-hidden">
       <Band>{title}</Band>
       {note && <p className="edge-soft-b px-5 py-2 text-xs text-fg-3">{note}</p>}
-      <table className="w-full text-[13px]">
+      <table className="w-full text-[length:calc(13px*var(--font-scale))]">
         <thead>
           <tr>
             <Th>{first.label}</Th>

@@ -123,7 +123,7 @@ export default function CompareView({
       </ShellActions>
 
       <div className="flex flex-col gap-1.5">
-        <h1 className="font-display text-[34px] uppercase leading-none tracking-[0.01em]">Compare</h1>
+        <h1 className="font-display text-[length:calc(34px*var(--font-scale))] uppercase leading-none tracking-[0.01em]">Compare</h1>
         <span className="text-xs text-fg-3">Review what a branch has that another ref does not — by default, what is not in production yet.</span>
       </div>
 
@@ -186,14 +186,14 @@ export default function CompareView({
           </div>
         )}
 
-        <div className="flex items-center gap-2 edge-b bg-subtle px-5 py-3">
-          <Select id="compare-model" icon="cpu" label="Model" wrapperClassName="w-[168px]" value={launch.model} onChange={(e) => setLaunch((l) => ({ ...l, model: e.target.value }))} disabled={isRunning}>
+        <div className="flex flex-wrap items-center gap-2 edge-b bg-subtle px-5 py-3">
+          <Select id="compare-model" icon="cpu" label="Model" wrapperClassName="w-[calc(168px*var(--font-scale))] shrink-0" value={launch.model} onChange={(e) => setLaunch((l) => ({ ...l, model: e.target.value }))} disabled={isRunning}>
             <option value="sonnet">Sonnet</option>
             <option value="opus">Opus</option>
             <option value="haiku">Haiku</option>
             <option value="fable">Fable</option>
           </Select>
-          <Select id="compare-effort" icon="gauge" label="Effort" wrapperClassName="w-[248px]" value={launch.effort} onChange={(e) => setLaunch((l) => ({ ...l, effort: e.target.value }))} disabled={isRunning}>
+          <Select id="compare-effort" icon="gauge" label="Effort" wrapperClassName="w-[calc(248px*var(--font-scale))] shrink-0" value={launch.effort} onChange={(e) => setLaunch((l) => ({ ...l, effort: e.target.value }))} disabled={isRunning}>
             <option value="quick">Quick · low effort</option>
             <option value="standard">Standard · medium effort</option>
             <option value="thorough">Thorough · high effort</option>
@@ -202,7 +202,7 @@ export default function CompareView({
           <Input
             id="compare-skills"
             icon="star"
-            wrapperClassName="w-[260px]"
+            wrapperClassName="min-w-[calc(180px*var(--font-scale))] flex-1"
             value={launch.skills}
             onChange={(e) => setLaunch((l) => ({ ...l, skills: e.target.value }))}
             placeholder="Skills, comma-separated (optional)"

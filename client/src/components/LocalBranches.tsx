@@ -185,7 +185,7 @@ export default function LocalBranches({
       </ShellActions>
 
       <div className="flex flex-col gap-1.5">
-        <h1 className="font-display text-[34px] uppercase leading-none tracking-[0.01em]">Local branches</h1>
+        <h1 className="font-display text-[length:calc(34px*var(--font-scale))] uppercase leading-none tracking-[0.01em]">Local branches</h1>
         <span className="text-xs text-fg-3">Review a local branch before opening a pull request.</span>
       </div>
 
@@ -226,14 +226,14 @@ export default function LocalBranches({
           />
         </div>
 
-        <div className="flex items-center gap-2 edge-b bg-subtle px-5 py-3">
-          <Select id="local-model" icon="cpu" label="Model" wrapperClassName="w-[168px]" value={model} onChange={(e) => setModel(e.target.value)} disabled={isRunning}>
+        <div className="flex flex-wrap items-center gap-2 edge-b bg-subtle px-5 py-3">
+          <Select id="local-model" icon="cpu" label="Model" wrapperClassName="w-[calc(168px*var(--font-scale))] shrink-0" value={model} onChange={(e) => setModel(e.target.value)} disabled={isRunning}>
             <option value="sonnet">Sonnet</option>
             <option value="opus">Opus</option>
             <option value="haiku">Haiku</option>
             <option value="fable">Fable</option>
           </Select>
-          <Select id="local-effort" icon="gauge" label="Effort" wrapperClassName="w-[248px]" value={effort} onChange={(e) => setEffort(e.target.value)} disabled={isRunning}>
+          <Select id="local-effort" icon="gauge" label="Effort" wrapperClassName="w-[calc(248px*var(--font-scale))] shrink-0" value={effort} onChange={(e) => setEffort(e.target.value)} disabled={isRunning}>
             <option value="quick">Quick · low effort</option>
             <option value="standard">Standard · medium effort</option>
             <option value="thorough">Thorough · high effort</option>
@@ -242,7 +242,7 @@ export default function LocalBranches({
           <Input
             id="local-skills"
             icon="star"
-            wrapperClassName="w-[260px]"
+            wrapperClassName="min-w-[calc(180px*var(--font-scale))] flex-1"
             value={skillsInput}
             onChange={(e) => setSkillsInput(e.target.value)}
             placeholder="Skills, comma-separated (optional)"
@@ -315,7 +315,7 @@ export default function LocalBranches({
       </Card>
 
       <div className="flex items-baseline gap-3">
-        <h2 className="font-display text-[22px] uppercase leading-none">Review history</h2>
+        <h2 className="font-display text-[length:calc(22px*var(--font-scale))] uppercase leading-none">Review history</h2>
         <span className="font-mono text-xs text-fg-3">
           {reviewsLoading
             ? "Loading…"
@@ -332,14 +332,14 @@ export default function LocalBranches({
               <Icon name="inbox" className="size-5" />
             </div>
             <div className="flex flex-col gap-1.5">
-              <span className="font-display text-[22px] uppercase leading-none">No reviews yet</span>
+              <span className="font-display text-[length:calc(22px*var(--font-scale))] uppercase leading-none">No reviews yet</span>
               <span className="max-w-[380px] text-fg-2">
                 Start a review on a branch above to see it here.
               </span>
             </div>
           </div>
         ) : (
-          <table className="w-full border-separate border-spacing-0 text-[13px]">
+          <table className="w-full border-separate border-spacing-0 text-[length:calc(13px*var(--font-scale))]">
             <thead>
               <tr>
                 <th className={TH}>Branch</th>
@@ -375,7 +375,7 @@ export default function LocalBranches({
                         >
                           {r.branch || branchFromRepoId(r.repo)}
                         </button>
-                        {r.base && <span className="shrink-0 font-mono text-[11px] text-fg-3">→ {r.base}</span>}
+                        {r.base && <span className="shrink-0 font-mono text-[length:calc(11px*var(--font-scale))] text-fg-3">→ {r.base}</span>}
                       </span>
                     </td>
                     <td className={TD}>

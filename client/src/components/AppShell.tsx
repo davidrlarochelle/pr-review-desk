@@ -46,7 +46,7 @@ export function Crumbs({ items }: { items: CrumbItem[] }) {
       <ol className="flex min-w-0 items-center gap-2">
         {items.map((c, i) => {
           const last = i === items.length - 1;
-          const text = c.mono ? "font-mono text-[12px] font-medium normal-case" : "label-caps";
+          const text = c.mono ? "font-mono text-[length:calc(12px*var(--font-scale))] font-medium normal-case" : "label-caps";
           return (
             <li key={i} className="flex min-w-0 items-center gap-2">
               {i > 0 && <span aria-hidden="true" className="text-fg-3">/</span>}
@@ -138,7 +138,7 @@ function Rail({
     <aside className="flex h-full w-[226px] shrink-0 flex-col gap-5 edge-r bg-rail-bg px-3 py-4">
       <div className="flex items-center gap-2.5 px-1">
         <Icon name="mark" className="size-6 shrink-0 text-rail-accent" strokeWidth={2.2} />
-        <span className="font-display text-[17px] uppercase leading-[18px] tracking-[0.02em] text-rail-accent">
+        <span className="font-display text-[length:calc(17px*var(--font-scale))] uppercase leading-[calc(18px*var(--font-scale))] tracking-[0.02em] text-rail-accent">
           PR Review
           <br />
           Desk
@@ -154,7 +154,7 @@ function Rail({
       >
         <Icon name="search" className="size-3.5 shrink-0" />
         <span className="flex-1 label-caps">Jump to…</span>
-        <kbd className="edge border-rail-line px-1 font-mono text-[10px] leading-[14px]">{JUMP_KEY_LABEL}</kbd>
+        <kbd className="edge border-rail-line px-1 font-mono text-[length:calc(10px*var(--font-scale))] leading-[calc(14px*var(--font-scale))]">{JUMP_KEY_LABEL}</kbd>
       </button>
 
       <nav aria-label="Sections">
@@ -178,7 +178,7 @@ function Rail({
                 >
                   <Icon name={s.icon} className="size-4 shrink-0" />
                   <span className="flex-1 truncate">{s.label}</span>
-                  {count !== undefined && <span className="font-mono text-[11px] tracking-normal">{count}</span>}
+                  {count !== undefined && <span className="font-mono text-[length:calc(11px*var(--font-scale))] tracking-normal">{count}</span>}
                 </button>
               </li>
             );
@@ -193,7 +193,7 @@ function Rail({
             >
               <Icon name="bell" className="size-4 shrink-0" />
               <span className="flex-1 truncate">Notifications</span>
-              {unread > 0 && <span className="bg-danger px-1.5 font-mono text-[11px] tracking-normal text-danger-fg">{unread > 99 ? "99+" : unread}</span>}
+              {unread > 0 && <span className="bg-danger px-1.5 font-mono text-[length:calc(11px*var(--font-scale))] tracking-normal text-danger-fg">{unread > 99 ? "99+" : unread}</span>}
             </button>
           </li>
         </ul>
@@ -210,13 +210,13 @@ function Rail({
           className="flex h-[38px] w-full cursor-default items-center gap-2 edge border-rail-line px-2.5 text-left text-rail-fg focus-ring"
         >
           <Icon name="repo" className="size-3.5 shrink-0" />
-          <span className="min-w-0 flex-1 truncate font-mono text-[12px]">{org ?? "—"}</span>
+          <span className="min-w-0 flex-1 truncate font-mono text-[length:calc(12px*var(--font-scale))]">{org ?? "—"}</span>
           <Icon name="chevronDown" className="size-3.5 shrink-0" />
         </button>
         {viewer?.login && (
           <div className="flex items-center gap-2 px-1 text-rail-fg">
             <Avatar name={viewer.login} />
-            <span className="truncate font-mono text-[12px]">{viewer.login}</span>
+            <span className="truncate font-mono text-[length:calc(12px*var(--font-scale))]">{viewer.login}</span>
           </div>
         )}
       </div>

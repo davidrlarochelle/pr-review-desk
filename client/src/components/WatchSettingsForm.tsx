@@ -74,7 +74,7 @@ export default function WatchSettingsForm() {
             shown.map((repo) => (
               <div key={repo} onClick={() => toggleRepo(repo)} className="flex h-9 cursor-pointer items-center gap-3 edge-soft-b px-3 last:border-b-0 hover:bg-row-hover">
                 <Checkbox checked={draft.autoReviewRepos.includes(repo)} onChange={() => toggleRepo(repo)} ariaLabel={`Automatic review on ${repo}`} />
-                <span className="min-w-0 flex-1 truncate font-mono text-[13px]">{repo}</span>
+                <span className="min-w-0 flex-1 truncate font-mono text-[length:calc(13px*var(--font-scale))]">{repo}</span>
               </div>
             ))
           )}
@@ -104,7 +104,7 @@ export default function WatchSettingsForm() {
             value={draft.dailyCapUsd}
             onChange={(e) => set({ dailyCapUsd: Number(e.target.value) })}
           />
-          <span className={`font-mono text-[12px] ${overCap ? "text-danger-ink" : "text-fg-2"}`}>
+          <span className={`font-mono text-[length:calc(12px*var(--font-scale))] ${overCap ? "text-danger-ink" : "text-fg-2"}`}>
             Spent today (UTC): ${data.spentTodayUsd.toFixed(2)}
             {overCap ? " — cap reached, no automatic review" : ""}
           </span>

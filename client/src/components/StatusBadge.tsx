@@ -11,7 +11,7 @@ const STYLES: Record<string, string> = {
   failed: "bg-st-failed-bg text-st-failed-fg",
 };
 
-const BLOCK = "inline-flex items-center whitespace-nowrap edge px-2 label-caps text-[11px] tracking-[.07em] leading-none";
+const BLOCK = "inline-flex items-center whitespace-nowrap edge px-2 label-caps text-[length:calc(11px*var(--font-scale))] tracking-[.07em] leading-none";
 
 export default function StatusBadge({ status, label }: { status: string; label?: string }) {
   const s = STYLES[status] ?? STYLES.none;

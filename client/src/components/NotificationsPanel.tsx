@@ -71,7 +71,7 @@ export default function NotificationsPanel({ onClose }: { onClose: () => void })
         }}
       >
         <div className="flex shrink-0 items-center gap-3 edge-b px-5 py-4">
-          <h2 id="notifications-title" className="font-display text-[22px] uppercase leading-none">
+          <h2 id="notifications-title" className="font-display text-[length:calc(22px*var(--font-scale))] uppercase leading-none">
             Notifications
           </h2>
           <div className="ml-auto">
@@ -153,12 +153,12 @@ function RecentList({
                 <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                   <span className="flex items-center gap-2">
                     <span className="label-caps text-fg-3">{kind.label}</span>
-                    {n.readAt === null && <span className="bg-acid px-1 font-mono text-[10px] leading-[14px] text-acid-fg">NEW</span>}
-                    <span className="ml-auto shrink-0 font-mono text-[11px] text-fg-3" title={new Date(n.createdAt).toLocaleString()}>
+                    {n.readAt === null && <span className="bg-acid px-1 font-mono text-[length:calc(10px*var(--font-scale))] leading-[calc(14px*var(--font-scale))] text-acid-fg">NEW</span>}
+                    <span className="ml-auto shrink-0 font-mono text-[length:calc(11px*var(--font-scale))] text-fg-3" title={new Date(n.createdAt).toLocaleString()}>
                       {relativeTime(n.createdAt)}
                     </span>
                   </span>
-                  <span className="truncate font-mono text-[13px] font-medium">{n.title}</span>
+                  <span className="truncate font-mono text-[length:calc(13px*var(--font-scale))] font-medium">{n.title}</span>
                   <span className="line-clamp-2 text-fg-2">{n.body}</span>
                 </span>
                 {n.kind === "comment-reply" && <Icon name="external" className="mt-0.5 size-3.5 shrink-0 text-fg-3" />}
