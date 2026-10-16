@@ -163,7 +163,10 @@ npx e2e run e2e/tests/findings.e2e.ts --headed   # one file, in a visible browse
 - **Add a flow.** Write it as a function in `e2e/flows.ts` and register it in a file under `e2e/tests/`. Start with `resetWorld()`, follow each `agent.act` with an `expect` on the screen (that is what lets the cache record it), and check everything in code: `expect` on the screen, the database and the fake CLIs' journals through `e2e/harness/world-state.ts` (`ghWrites()` is what would have reached GitHub). Never `agent.assert`: it calls the model on every run. Match texts with `/…/i`, since two design systems print them in capitals. New PRs, diffs or review reports go in `e2e/fixtures/`.
 - **Refresh the cache.** After a UI change, run `npm run test:e2e`: steps that no longer replay are done again by the agent and recorded. Commit what changed under `.e2e/cache/`. `npx e2e cache ls` lists the entries, `npx e2e cache clear` starts over.
 - **When it fails.** Each failed test has a trace page under `.e2e/results/`, the server log is in `.e2e/logs/app.log`, and `E2E_KEEP_WORLD=1` keeps the world folder (database, journals) after the run.
-- **CI.** `.github/workflows/e2e.yml` replays the cache with `--strict-cache`: no model call and no secret. A stale step fails with `REPLAY_STALE`; refresh the cache locally.
+- **Cost.** After each `npm run test:e2e`, a line gives the run's model calls and their estimated cost (`9 tests · 0 appel · 0,000 $`), with the steps that called the model, and is added to `.e2e/cost-history.jsonl`. `npm run e2e:cost` computes it again on the last report (`-- --report <file>` for another one).
+- **Ceiling.** `E2E_MAX_USD` (default 1.00) makes the run fail when its estimated cost goes over it. Prices are fixed at the top of `e2e/harness/cost.mjs`: a model missing there fails the calculation rather than counting as free.
+- **Billed cost.** The figure is an estimate from the tokens reported. The amount actually billed is in the Anthropic console, under the `e2e` workspace (the one of the `ant` profile).
+- **CI.** `.github/workflows/e2e.yml` replays the cache with `--strict-cache`: no model call and no secret. The job summary shows the cost, and one model call fails the job. A stale step fails with `REPLAY_STALE`; refresh the cache locally.
 
 ### How it is built
 

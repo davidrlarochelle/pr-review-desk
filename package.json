@@ -12,7 +12,8 @@
     "build": "vite build && tsc -p server/tsconfig.json",
     "start": "node server/dist/server/src/index.js",
     "test": "vitest run",
-    "test:e2e": "npm run build && e2e run"
+    "test:e2e": "npm run build && node e2e/harness/run-e2e.mjs",
+    "e2e:cost": "node e2e/harness/cost.mjs"
   },
   "dependencies": {
     "@tanstack/react-router": "^1.170.39",
