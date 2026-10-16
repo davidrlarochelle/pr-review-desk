@@ -82,7 +82,9 @@ export function parseDiscussion(json: unknown): PrDiscussion {
 }
 
 /** Each comment line behind "> ": a body can never pass for a heading, a marker, or the Desk's own words. */
-const quoted = (text: string) => text.split("\n").map((line) => `> ${line}`).join("\n");
+// Every kind of line break a reader may honour, not only \n: a bare \r or U+2028 must not open an unquoted line.
+const LINE_BREAK = /\r\n|[\n\r\v\f\u0085\u2028\u2029]/;
+const quoted = (text: string) => text.split(LINE_BREAK).map((line) => `> ${line}`).join("\n");
 
 /**
  * The prompt section. `deskUrls` are the GitHub URLs of comments this Desk posted (findings.comment_url):
@@ -101,7 +103,7 @@ export function formatDiscussion(d: PrDiscussion, deskUrls: Set<string>, nonce: 
     ...d.conversation.map((c) => `### Commentaire de ${who(c)} dans la conversation\n${quoted(c.body)}`),
     ...d.threads.map((t) => {
       const flags = [t.resolved && "résolu", t.outdated && "code modifié depuis"].filter(Boolean).join(", ");
-      const where = `${t.path}${t.line !== null ? `:${t.line}` : ""}`;
+      const where = `${t.path.split(LINE_BREAK).join(" ")}${t.line !== null ? `:${t.line}` : ""}`;
       const replies = t.comments.map((c, i) => `${i === 0 ? "" : "↳ réponse de "}${who(c)} :\n${quoted(c.body)}`).join("\n\n");
       return `### Fil sur \`${where}\`${flags ? ` (${flags})` : ""}\n${replies}`;
     }),
