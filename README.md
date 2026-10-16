@@ -150,6 +150,21 @@ npm test
 
 In dev mode the server calls your own `gh` and `claude`, so their logins are used; it reads `.env` (if any) for the optional settings and uses your checkouts in place, from `REPOS_ROOT`. It uses the same `./data` folder as the container, so stop one before starting the other.
 
+### End-to-end tests
+
+The user flows run in a browser with [e2e](https://e2e.tester.army/docs/quickstart.md), against a closed world: fake `gh` and `claude` (`e2e/harness/bin/`) answer from `e2e/fixtures/`, so no test reaches GitHub or a model through the app, and nothing is ever posted. Each run starts the production build on port 3203 with a fresh database in a temporary folder, deleted at the end.
+
+```bash
+npm run test:e2e        # builds, then runs every flow; needs Node 24.8+ (or 22.22.3+)
+npx e2e run e2e/tests/findings.e2e.ts --headed   # one file, in a visible browser
+```
+
+- **Agent steps.** `agent.act` moves through the app (Anthropic, token from `ant auth print-credentials --profile e2e`; another profile with `E2E_ANT_PROFILE`). Every step is replayed from `.e2e/cache/`, which is committed: a run that changes nothing makes no model call.
+- **Add a flow.** Write it as a function in `e2e/flows.ts` and register it in a file under `e2e/tests/`. Start with `resetWorld()`, follow each `agent.act` with an `expect` on the screen (that is what lets the cache record it), and check everything in code: `expect` on the screen, the database and the fake CLIs' journals through `e2e/harness/world-state.ts` (`ghWrites()` is what would have reached GitHub). Never `agent.assert`: it calls the model on every run. Match texts with `/…/i`, since two design systems print them in capitals. New PRs, diffs or review reports go in `e2e/fixtures/`.
+- **Refresh the cache.** After a UI change, run `npm run test:e2e`: steps that no longer replay are done again by the agent and recorded. Commit what changed under `.e2e/cache/`. `npx e2e cache ls` lists the entries, `npx e2e cache clear` starts over.
+- **When it fails.** Each failed test has a trace page under `.e2e/results/`, the server log is in `.e2e/logs/app.log`, and `E2E_KEEP_WORLD=1` keeps the world folder (database, journals) after the run.
+- **CI.** `.github/workflows/e2e.yml` replays the cache with `--strict-cache`: no model call and no secret. A stale step fails with `REPLAY_STALE`; refresh the cache locally.
+
 ### How it is built
 
 Express and SQLite on the server, React and Vite in the client, TanStack Router for the URLs. The server shells out to `gh` for everything GitHub and to `claude -p --output-format stream-json` for reviews, then parses the JSON report the agent ends with into findings.
