@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@tanstack/react-router": "^1.170.39",
+    "@typesafe-ai/sdk": "0.7.0",
     "better-sqlite3": "^11.7.0",
     "express": "^5.1.0",
     "uuid": "^11.1.0",

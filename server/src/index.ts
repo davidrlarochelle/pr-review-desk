@@ -16,11 +16,14 @@ import { configuredLocalRepos } from "./services/local-git";
 import { notify, startReviewOutcomeNotifications, watchEventNotification } from "./services/notifications";
 import { githubEvents, startGithubPoller } from "./services/github-poller";
 import type { WatchEvent } from "./services/github-watch";
+import { reviewOutcomes } from "./services/review-engine";
+import { jevClientFromEnv, judgeFindingsOnOutcome } from "./services/jev";
 
 const db = getDb();
 const stuck = db.prepare("UPDATE reviews SET status = 'failed', error = 'Server restarted during review' WHERE status IN ('running', 'queued')").run();
 if (stuck.changes > 0) console.log(`[startup] reset ${stuck.changes} stuck review(s) to failed`);
 failInterruptedRuns();
+if (judgeFindingsOnOutcome(reviewOutcomes, getDb, jevClientFromEnv())) console.log("[startup] Jev judges new findings (TYPESAFE_API_KEY is set)");
 
 const app = express();
 const port = Number(process.env.PORT ?? 3100);

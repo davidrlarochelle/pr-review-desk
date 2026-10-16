@@ -69,6 +69,8 @@ The review compares **commits**: `base...branch` in that checkout. Work that is 
 | `LOCAL_REPOS` | no | none | Extra local checkouts, `label=relative/path,…` |
 | `HOST_PORT` | no | `37703` | Port the app is served on |
 | `PORT` | no | `3100` | Port of the server in dev mode |
+| `TYPESAFE_API_KEY` | no | none | Turns on Jev: each new finding is judged (nit, severity, does it hold) and Activity compares the answers with what you posted or dismissed. **The text of every finding is sent to TypeSafe** |
+| `JEV_MODEL` | no | `jev-1.13.0` | Jev model; pinned so stored probabilities stay comparable |
 
 ## Using it
 
