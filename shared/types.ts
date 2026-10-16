@@ -374,3 +374,8 @@ export interface FindingQualitySummaryDto {
     byDecision: { state: string; judged: number; meanNit: number; meanHolds: number; meanSeverity: number }[];
   };
 }
+
+export interface WatchSettingsDto extends WatchSettings {
+  /** What today's finished review runs (UTC) cost, against dailyCapUsd. */
+  spentTodayUsd: number;
+}

@@ -3,7 +3,8 @@ import { getDb } from "../db/schema";
 import { listNotifications, notificationEvents, readAll, unreadCount } from "../services/notifications";
 import { pollNow } from "../services/github-poller";
 import { getWatchSettings, saveWatchSettings } from "../services/watch-settings";
-import type { NotificationListDto, NotificationStreamEvent, WatchSettings } from "../../../shared/types";
+import { spentTodayUsd } from "../services/auto-review";
+import type { NotificationListDto, NotificationStreamEvent, WatchSettings, WatchSettingsDto } from "../../../shared/types";
 
 export const notificationsRouter = Router();
 
@@ -38,12 +39,14 @@ notificationsRouter.post("/notifications/poll", async (_req, res) => {
 });
 
 notificationsRouter.get("/notifications/settings", (_req, res) => {
-  res.json(getWatchSettings(getDb()));
+  const db = getDb();
+  res.json({ ...getWatchSettings(db), spentTodayUsd: spentTodayUsd(db) } satisfies WatchSettingsDto);
 });
 
 notificationsRouter.put("/notifications/settings", (req, res) => {
   try {
-    res.json(saveWatchSettings(getDb(), req.body as Partial<WatchSettings>));
+    const db = getDb();
+    res.json({ ...saveWatchSettings(db, req.body as Partial<WatchSettings>), spentTodayUsd: spentTodayUsd(db) } satisfies WatchSettingsDto);
   } catch (err) {
     res.status(400).json({ error: err instanceof Error ? err.message : String(err) });
   }
