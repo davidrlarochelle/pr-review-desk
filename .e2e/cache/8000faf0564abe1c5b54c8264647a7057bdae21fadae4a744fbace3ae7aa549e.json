@@ -1,6 +1,6 @@
 {
   "schemaVersion": "trace-1",
-  "createdAt": "2026-10-16T01:57:19.216Z",
+  "createdAt": "2026-10-16T02:07:30.789Z",
   "payload": {
     "actions": [
       {
@@ -24,9 +24,9 @@
       "callIndex": 0,
       "agent": "default"
     },
-    "summary": "The finding \"Retrying a charge can bill the customer twice\" is open. Its detail page loaded at /prs/acme/widgets/42/findings/dbdbabb3-…, with that heading, a \"Finding 1 of 2\" label, the comment editor and the diff.",
+    "summary": "I opened the finding \"Retrying a charge can bill the customer twice\" by tapping its row on PR #42. The finding page loaded: its heading shows that title, it's labelled \"Finding 1 of 2\", and it shows the High severity, open status, comment editor and diff.",
     "startPath": "/prs/acme/widgets/42",
-    "endPath": "/prs/acme/widgets/42/findings/dbdbabb3-f409-4d3e-bf7f-a4ecbbdda856",
+    "endPath": "/prs/acme/widgets/42/findings/43aed2ce-82d6-4ce1-b7bd-bce37091efae",
     "endAnchors": [
       {
         "role": "button",
@@ -87,7 +87,7 @@
         "text": "feat/payment-retry"
       }
     ],
-    "endWaitMs": 12937,
+    "endWaitMs": 12827,
     "keyedBy": {
       "cacheSchema": "trace-1",
       "policyVersion": "conservative/6",

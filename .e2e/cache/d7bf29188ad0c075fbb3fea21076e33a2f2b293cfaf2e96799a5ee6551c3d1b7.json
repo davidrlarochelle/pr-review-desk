@@ -1,6 +1,6 @@
 {
   "schemaVersion": "trace-1",
-  "createdAt": "2026-10-16T01:56:21.902Z",
+  "createdAt": "2026-10-16T02:06:25.207Z",
   "payload": {
     "actions": [
       {
@@ -24,9 +24,9 @@
       "callIndex": 0,
       "agent": "default"
     },
-    "summary": "The finding is reopened. I tapped Reopen, and its status changed from \"dismissed\" to \"open\". The button now reads \"Dismiss\".",
-    "startPath": "/prs/acme/widgets/42/findings/0dbc6a84-a7ea-4af5-bf6a-0c6f590a10cc",
-    "endPath": "/prs/acme/widgets/42/findings/0dbc6a84-a7ea-4af5-bf6a-0c6f590a10cc",
+    "summary": "I tapped Reopen on the finding \"Name the retry limit\". Its status changed from \"dismissed\" to \"open\", and the Reopen button became \"Dismiss\".",
+    "startPath": "/prs/acme/widgets/42/findings/79e856da-e09b-4204-b2ab-de36ec56fcf7",
+    "endPath": "/prs/acme/widgets/42/findings/79e856da-e09b-4204-b2ab-de36ec56fcf7",
     "endAnchors": [
       {
         "text": "open"
@@ -45,7 +45,7 @@
         "name": "Reopen"
       }
     ],
-    "endWaitMs": 12465,
+    "endWaitMs": 12230,
     "keyedBy": {
       "cacheSchema": "trace-1",
       "policyVersion": "conservative/6",

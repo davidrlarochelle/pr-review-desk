@@ -1,6 +1,6 @@
 {
   "schemaVersion": "trace-1",
-  "createdAt": "2026-10-16T01:57:07.251Z",
+  "createdAt": "2026-10-16T02:07:18.898Z",
   "payload": {
     "actions": [
       {
@@ -25,7 +25,7 @@
       "callIndex": 0,
       "agent": "default"
     },
-    "summary": "I opened the pull request \"Add retry to the payment client\". The app went to /prs/acme/widgets/42, and the page heading reads \"Add retry to the payment client #42\".",
+    "summary": "The pull request opened. The page went to /prs/acme/widgets/42, and its heading reads \"Add retry to the payment client #42\".",
     "startPath": "/prs?repo=acme%2Fwidgets",
     "endPath": "/prs/acme/widgets/42",
     "endAnchors": [
@@ -89,7 +89,7 @@
         "name": "All repos (acme)"
       }
     ],
-    "endWaitMs": 12507,
+    "endWaitMs": 12170,
     "keyedBy": {
       "cacheSchema": "trace-1",
       "policyVersion": "conservative/6",

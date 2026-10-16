@@ -1,6 +1,6 @@
 {
   "schemaVersion": "trace-1",
-  "createdAt": "2026-10-16T01:56:57.060Z",
+  "createdAt": "2026-10-16T02:07:08.860Z",
   "payload": {
     "actions": [
       {
@@ -35,7 +35,7 @@
       "callIndex": 0,
       "agent": "default"
     },
-    "summary": "The step passed. I ticked acme/widgets in the repository picker and pressed Save. The dialog closed and a notice read \"Following 1 repository\". The Pull requests page now has acme/widgets selected in the Repository filter and lists 2 open pull requests, #43 and #42.",
+    "summary": "Ticked acme/widgets and saved it, and the step passed. The dialog closed and a \"Following 1 repository\" notice appeared. The Pull requests list now filters to acme/widgets and shows 2 open pull requests: #43 and #42.",
     "startPath": "/prs",
     "endPath": "/prs?repo=acme%2Fwidgets",
     "endAnchors": [
@@ -104,7 +104,7 @@
         "name": "acme/archive"
       }
     ],
-    "endWaitMs": 12703,
+    "endWaitMs": 12988,
     "keyedBy": {
       "cacheSchema": "trace-1",
       "policyVersion": "conservative/6",

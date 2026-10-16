@@ -29,7 +29,7 @@ if (!fs.existsSync(SERVER) || !fs.existsSync(path.join(ROOT, "dist/index.html"))
 fs.rmSync(WORLD, { recursive: true, force: true });
 fs.mkdirSync(path.join(WORLD, "data"), { recursive: true });
 fs.symlinkSync(path.join(ROOT, "dist"), path.join(WORLD, "dist"));
-for (const journal of ["gh-calls.jsonl", "gh-writes.jsonl", "claude-calls.jsonl"]) fs.writeFileSync(path.join(WORLD, journal), "");
+for (const journal of ["gh-calls.jsonl", "gh-writes.jsonl", "gh-failures.jsonl", "claude-calls.jsonl"]) fs.writeFileSync(path.join(WORLD, journal), "");
 
 // A local checkout with a branch to review: main has add(), feat/divide adds divide().
 const repo = path.join(WORLD, "repos/sample-app");
@@ -59,8 +59,9 @@ git("checkout", "-q", "main");
 
 // ── The server's environment ─────────────────────────────────────────────────
 const env = { ...process.env };
-// Nothing that could reach the real services, whatever the caller exported.
-for (const key of Object.keys(env)) if (/^(GH_|GITHUB_|CLAUDE_|ANTHROPIC_)/.test(key) || key === "REPOS" || key === "SCAN_DIR") delete env[key];
+// Nothing that could reach the real services, whatever the caller exported: no GitHub or Claude
+// token, and no TYPESAFE_API_KEY, so Jev stays off.
+for (const key of Object.keys(env)) if (/^(GH_|GITHUB_|CLAUDE_|ANTHROPIC_|TYPESAFE_)/.test(key) || key === "REPOS" || key === "SCAN_DIR") delete env[key];
 Object.assign(env, {
   PATH: `${FAKE_BIN}${path.delimiter}${process.env.PATH ?? ""}`,
   NODE_ENV: "production",

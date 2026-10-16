@@ -1,6 +1,6 @@
 {
   "schemaVersion": "trace-1",
-  "createdAt": "2026-10-16T01:56:39.607Z",
+  "createdAt": "2026-10-16T02:06:50.485Z",
   "payload": {
     "actions": [
       {
@@ -24,7 +24,7 @@
       "callIndex": 0,
       "agent": "default"
     },
-    "summary": "I tapped View next to \"Last review\", and the latest review of feat/divide opened. The page is titled \"Add divide()\" and shows sample-app · feat/divide against main with status Running. It shows 0 findings so far, with the message \"Findings will appear here as the review progresses.\"",
+    "summary": "I pressed View next to \"Last review\", and the review page for \"Add divide()\" opened (sample-app · feat/divide vs main, path /local/sample-app/reviews/sample-app-e9e751fa0b/0). The review is still Running, so Findings shows 0 and the page says \"Findings will appear here as the review progresses.\"",
     "startPath": "/local/sample-app?branch=feat%2Fdivide&base=main",
     "endPath": "/local/sample-app/reviews/sample-app-e9e751fa0b/0?branch=feat%2Fdivide&base=main",
     "endAnchors": [
@@ -95,7 +95,7 @@
         "text": "Model"
       }
     ],
-    "endWaitMs": 12302,
+    "endWaitMs": 13762,
     "keyedBy": {
       "cacheSchema": "trace-1",
       "policyVersion": "conservative/6",
