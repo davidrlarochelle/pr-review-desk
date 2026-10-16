@@ -527,3 +527,61 @@ export async function fetchCompare(repo: string, base: string, head: string): Pr
 export async function fetchCompareDiff(repo: string, base: string, head: string): Promise<string> {
   return runGh(["api", "-H", "Accept: application/vnd.github.diff", `repos/${repo}/compare/${compareRange(base, head)}`]);
 }
+
+// ── Watching: what the notification poller reads ──
+
+export interface ReviewRequestedPr {
+  repo: string;
+  number: number;
+  title: string;
+  url: string;
+  author: string;
+}
+
+/** Open PRs asking for the viewer's review, directly or through one of their teams, across every repository. */
+export async function searchReviewRequested(): Promise<ReviewRequestedPr[]> {
+  const stdout = await runGh(["search", "prs", "--review-requested=@me", "--state=open", "--limit", "200", "--json", "repository,number,title,url,author"]);
+  const items = JSON.parse(stdout) as { repository: { nameWithOwner: string }; number: number; title: string; url: string; author: { login: string } | null }[];
+  return items.map((i) => ({ repo: i.repository.nameWithOwner, number: i.number, title: i.title, url: i.url, author: i.author?.login ?? "" }));
+}
+
+export interface OpenPrHead {
+  number: number;
+  title: string;
+  url: string;
+  headRefOid: string;
+}
+
+/** Every open PR of a repository with its head commit. Uncached: the poller needs what GitHub has now. */
+export async function listOpenPrHeads(repo: string): Promise<OpenPrHead[]> {
+  const stdout = await runGh(["pr", "list", "-R", repo, "--state", "open", "--limit", "200", "--json", "number,title,url,headRefOid"]);
+  return JSON.parse(stdout) as OpenPrHead[];
+}
+
+export interface PrReviewComment {
+  id: number;
+  /** The thread's first comment: GitHub points every reply at it. */
+  inReplyToId: number | null;
+  author: string;
+  isBot: boolean;
+  body: string;
+  url: string;
+  createdAt: string;
+}
+
+/** Every inline review comment of a PR, replies included. */
+export async function listPrReviewComments(repo: string, number: number): Promise<PrReviewComment[]> {
+  const stdout = await runGh(["api", "--paginate", `repos/${repo}/pulls/${number}/comments?per_page=100`]);
+  return (JSON.parse(stdout) as Record<string, unknown>[]).map((c) => {
+    const user = c.user as { login?: string; type?: string } | null;
+    return {
+      id: Number(c.id),
+      inReplyToId: typeof c.in_reply_to_id === "number" ? c.in_reply_to_id : null,
+      author: user?.login ?? "",
+      isBot: user?.type === "Bot",
+      body: String(c.body ?? ""),
+      url: String(c.html_url ?? ""),
+      createdAt: String(c.created_at ?? ""),
+    };
+  });
+}

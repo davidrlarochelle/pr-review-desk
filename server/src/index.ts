@@ -8,10 +8,14 @@ import { findingsRouter } from "./routes/findings";
 import { localRouter } from "./routes/local";
 import { compareRouter } from "./routes/compare";
 import { telemetryRouter } from "./routes/telemetry";
+import { notificationsRouter } from "./routes/notifications";
 import { track } from "./db/telemetry";
 import { localOnly } from "./services/local-only";
 import { failInterruptedRuns } from "./services/run-log";
 import { configuredLocalRepos } from "./services/local-git";
+import { notify, startReviewOutcomeNotifications, watchEventNotification } from "./services/notifications";
+import { githubEvents, startGithubPoller } from "./services/github-poller";
+import type { WatchEvent } from "./services/github-watch";
 
 const db = getDb();
 const stuck = db.prepare("UPDATE reviews SET status = 'failed', error = 'Server restarted during review' WHERE status IN ('running', 'queued')").run();
@@ -47,6 +51,10 @@ app.use("/api", findingsRouter);
 app.use("/api", localRouter);
 app.use("/api", compareRouter);
 app.use("/api", telemetryRouter);
+app.use("/api", notificationsRouter);
+
+startReviewOutcomeNotifications();
+githubEvents.on("event", (event: WatchEvent) => notify(watchEventNotification(event)));
 
 if (process.env.NODE_ENV === "production") {
   const distDir = path.join(process.cwd(), "dist");
@@ -62,4 +70,5 @@ app.listen(port, () => {
   console.log(`pr-review-desk server listening on http://localhost:${port}`);
   console.log(`repos: ${configuredRepos().join(", ") || "(none yet, pick them in the app)"}`);
   console.log(`local repos: ${configuredLocalRepos().map((r) => r.label).join(", ") || "(none)"}`);
+  startGithubPoller();
 });

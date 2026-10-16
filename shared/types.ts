@@ -268,3 +268,51 @@ export interface CompareSummaryDto {
   commits: { sha: string; message: string; author: string }[];
   files: { path: string; additions: number; deletions: number }[];
 }
+
+/** What a Desk notification is about: a review's outcome, a GitHub event the poller saw, or an automatic review. */
+export type DeskNotificationKind =
+  | "review-reported"
+  | "review-failed"
+  | "review-requested"
+  | "new-commits"
+  | "comment-reply"
+  | "auto-review-started"
+  | "auto-review-skipped";
+
+/** One entry of the notification history, also pushed live to every open tab. */
+export interface DeskNotification {
+  id: number;
+  kind: DeskNotificationKind;
+  title: string;
+  body: string;
+  /** Same tag in every tab: the system keeps one notification instead of stacking copies. */
+  tag: string;
+  /** Where on GitHub it happened, when it happened there (a reply opens on GitHub). */
+  url: string | null;
+  /** The Desk screen a click opens. */
+  target: ReviewTarget | null;
+  createdAt: string;
+  readAt: string | null;
+}
+
+/** The single notification stream: a new notification, or the unread count after someone opened the list. */
+export type NotificationStreamEvent =
+  | { type: "notification"; notification: DeskNotification; unread: number }
+  | { type: "read"; unread: number };
+
+export interface NotificationListDto {
+  items: DeskNotification[];
+  unread: number;
+}
+
+/** Polling and automatic review, kept in the settings table. */
+export interface WatchSettings {
+  /** Seconds between two GitHub polls. */
+  pollSeconds: number;
+  /** Repositories where a review request or a push on a reviewed PR starts a review by itself. Empty by default. */
+  autoReviewRepos: string[];
+  /** No automatic review once today's runs (UTC) cost this much, in USD. */
+  dailyCapUsd: number;
+  autoReviewModel: string | null;
+  autoReviewEffort: string | null;
+}
