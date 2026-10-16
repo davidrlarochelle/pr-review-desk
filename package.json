@@ -11,7 +11,8 @@
     "dev:client": "vite",
     "build": "vite build && tsc -p server/tsconfig.json",
     "start": "node server/dist/server/src/index.js",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:e2e": "npm run build && e2e run"
   },
   "dependencies": {
     "@tanstack/react-router": "^1.170.39",
@@ -21,6 +22,8 @@
     "zod": "^3.24.0"
   },
   "devDependencies": {
+    "@ai-sdk/anthropic": "^4.0.81",
+    "@e2e-dev/web": "^0.15.1",
     "@tailwindcss/vite": "^4.1.0",
     "@types/better-sqlite3": "^7.6.12",
     "@types/express": "^5.0.0",
@@ -29,8 +32,10 @@
     "@types/react-dom": "^19.0.0",
     "@types/uuid": "^10.0.0",
     "@vitejs/plugin-react": "^4.3.4",
+    "ai": "^7.0.0",
     "autoprefixer": "^10.4.20",
     "concurrently": "^9.1.0",
+    "e2e": "^0.21.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "tailwindcss": "^4.1.0",
