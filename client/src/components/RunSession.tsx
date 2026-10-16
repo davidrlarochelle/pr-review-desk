@@ -93,7 +93,14 @@ export default function RunSession({
               <Stat label="Cache read / write" value={run.cacheReadTokens != null ? `${formatCount(run.cacheReadTokens)} / ${formatCount(run.cacheCreationTokens ?? 0)}` : "—"} />
               <Stat label="Cost" value={run.costUsd != null ? `$${run.costUsd.toFixed(3)}` : "—"} />
               <Stat label="Skills" value={run.skills.length ? run.skills.join(", ") : "—"} />
+              <Stat label="Mode" value={run.mode === "followup" && run.baseSha ? `Follow-up since ${run.baseSha.slice(0, 9)}` : "Whole change"} />
             </dl>
+            {run.instructions && (
+              <div className="flex flex-col gap-1.5 edge-t px-5 py-3">
+                <span className="label-caps text-fg-3">Instructions for the agent</span>
+                <p className="whitespace-pre-wrap text-[13px] text-fg-2">{run.instructions}</p>
+              </div>
+            )}
             {run.status === "failed" && run.error && (
               <div role="alert" className="flex flex-col edge-t bg-danger-soft">
                 <Band tone="problem">

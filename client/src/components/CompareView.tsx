@@ -6,6 +6,7 @@ import Button from "./ui/Button";
 import Card, { Chip, Eyebrow } from "./ui/Card";
 import Combobox from "./ui/Combobox";
 import { Input, Select } from "./ui/Field";
+import ReviewInstructions, { useReviewInstructions } from "./ReviewInstructions";
 import Icon from "./ui/Icon";
 import NotFound from "./ui/NotFound";
 import { CardSkeleton } from "./ui/Skeleton";
@@ -83,10 +84,11 @@ export default function CompareView({
   const tooLarge = !!summary && summary.truncated;
   const canStart = rangeReady && !!summary && !nothingToReview && !tooLarge && !isRunning && !startReview.loading;
 
+  const [instructions, setInstructions] = useReviewInstructions(`compare:${repo}:${head}`);
   const handleStart = async () => {
     const skills = launch.skills.split(",").map((s) => s.trim()).filter(Boolean);
     try {
-      await startReview.mutate({ repo, base, head, skills, model: launch.model, effort: launch.effort });
+      await startReview.mutate({ repo, base, head, skills, model: launch.model, effort: launch.effort, instructions });
       toast({ kind: "success", message: `Review started for ${head} vs ${base}` });
       refetchLatest();
     } catch (err) {
@@ -212,6 +214,7 @@ export default function CompareView({
           </Button>
           {latest && <StatusBadge status={latest.status} />}
         </div>
+        <ReviewInstructions id="compare-instructions" value={instructions} onChange={setInstructions} disabled={isRunning} />
 
         {rangeReady && (summaryLoading && !summary ? (
           <div className="px-5 py-3 text-xs text-fg-3">Comparing {head} with {base} on GitHub…</div>

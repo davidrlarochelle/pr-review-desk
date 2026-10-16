@@ -23,10 +23,11 @@ interface PrSnapshotResponse {
   review: ReviewDto | null;
 }
 import SeverityBadge from "./SeverityBadge";
-import StatusBadge, { FindingStateBadge } from "./StatusBadge";
+import StatusBadge, { FindingStateBadge, FollowupBadge } from "./StatusBadge";
 import Button, { LinkButton } from "./ui/Button";
 import Card, { Band, Chip } from "./ui/Card";
 import { Checkbox, Input, Select } from "./ui/Field";
+import ReviewInstructions, { useReviewInstructions } from "./ReviewInstructions";
 import Icon from "./ui/Icon";
 import Avatar from "./ui/Avatar";
 import Skeleton, { CardSkeleton } from "./ui/Skeleton";
@@ -67,6 +68,7 @@ export default function PRDetail({
   const setModel = (model: string) => setLaunch((l) => ({ ...l, model }));
   const setEffort = (effort: string) => setLaunch((l) => ({ ...l, effort }));
   const setSkillsInput = (skills: string) => setLaunch((l) => ({ ...l, skills }));
+  const [instructions, setInstructions] = useReviewInstructions(`pr:${repo}#${number}`);
   // What this screen was showing survives a refresh, in this tab only.
   const [view, setView] = useStoredState("session", `prd:view:pr:${repo}#${number}`, { thread: false, selected: [] as string[] });
   const showThread = view.thread;
@@ -121,7 +123,7 @@ export default function PRDetail({
   const handleStartReview = async () => {
     const skills = skillsInput.split(",").map((s) => s.trim()).filter(Boolean);
     try {
-      await startReview.mutate({ repo, number, skills, model, effort });
+      await startReview.mutate({ repo, number, skills, model, effort, instructions });
       refetchReview();
     } catch (err) {
       toast({ kind: "error", message: `Could not start review: ${(err as Error).message}` });
@@ -320,6 +322,7 @@ export default function PRDetail({
             </Button>
           )}
         </div>
+        <ReviewInstructions id="pr-instructions" value={instructions} onChange={setInstructions} disabled={isRunning} />
 
         {review?.status === "failed" && review.error && (
           <div role="alert" className="flex flex-col edge-t bg-danger-soft">
@@ -454,7 +457,8 @@ export default function PRDetail({
                     <span className="w-[300px] shrink-0 truncate font-mono text-xs text-fg-3" title={finding.file}>
                       {finding.file}:{finding.startLine ?? "?"}
                     </span>
-                    <span className={`min-w-0 flex-1 truncate font-medium ${finding.state === "dismissed" ? "text-fg-3" : ""}`}>{finding.title}</span>
+                    <span className={`min-w-0 flex-1 truncate font-medium ${finding.state === "dismissed" || finding.state === "resolved" ? "text-fg-3" : ""}`}>{finding.title}</span>
+                    <FollowupBadge status={finding.followupStatus} state={finding.state} />
                     <FindingStateBadge state={finding.state} />
                     <Icon name="chevronRight" className="size-4 text-fg-3 group-hover:text-fg" />
                   </button>

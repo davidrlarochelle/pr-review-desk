@@ -6,6 +6,7 @@ import Button from "./ui/Button";
 import Card, { Eyebrow } from "./ui/Card";
 import Combobox from "./ui/Combobox";
 import { Input, Select } from "./ui/Field";
+import ReviewInstructions, { useReviewInstructions } from "./ReviewInstructions";
 import Icon from "./ui/Icon";
 import { TableSkeleton } from "./ui/Skeleton";
 import { useToast } from "./ui/Toast";
@@ -70,6 +71,7 @@ export default function LocalBranches({
   const setModel = (model: string) => setLaunch((l) => ({ ...l, model }));
   const setEffort = (effort: string) => setLaunch((l) => ({ ...l, effort }));
   const setSkillsInput = (skills: string) => setLaunch((l) => ({ ...l, skills }));
+  const [instructions, setInstructions] = useReviewInstructions(`local:${label}:${branch}`);
   const { toast } = useToast();
 
   const unknownRepo = !!label && !!repos && !repos.some((r) => r.label === label);
@@ -135,7 +137,7 @@ export default function LocalBranches({
   const handleStart = async () => {
     const skills = skillsInput.split(",").map((s) => s.trim()).filter(Boolean);
     try {
-      await startReview.mutate({ repo, branch, base, skills, model, effort });
+      await startReview.mutate({ repo, branch, base, skills, model, effort, instructions });
       toast({ kind: "success", message: `Review started for ${branch}` });
       refetchLatest();
       refetchReviews();
@@ -241,6 +243,7 @@ export default function LocalBranches({
           </Button>
           {latest && <StatusBadge status={latest.status} />}
         </div>
+        <ReviewInstructions id="local-instructions" value={instructions} onChange={setInstructions} disabled={isRunning} />
 
         {summary && branch !== base && (
           <div className={`flex items-center gap-2 edge-t px-5 py-3 text-xs ${nothingToReview ? "bg-danger-soft text-fg" : "text-fg-2"}`}>

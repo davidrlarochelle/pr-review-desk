@@ -6,7 +6,7 @@ import { ReimportButton, ScopeNote, SessionButton } from "./RunSession";
 import { useSSE } from "../hooks/useSSE";
 import type { FindingDto, ReviewDto } from "../../../shared/types";
 import SeverityBadge from "./SeverityBadge";
-import StatusBadge, { FindingStateBadge } from "./StatusBadge";
+import StatusBadge, { FindingStateBadge, FollowupBadge } from "./StatusBadge";
 import Button from "./ui/Button";
 import Card, { Band, Chip } from "./ui/Card";
 import Icon from "./ui/Icon";
@@ -275,7 +275,8 @@ export default function LocalReviewDetail({
                 <span className="w-[300px] shrink-0 truncate font-mono text-xs text-fg-3" title={finding.file}>
                   {finding.file}:{finding.startLine ?? "?"}
                 </span>
-                <span className={`min-w-0 flex-1 truncate font-medium ${finding.state === "dismissed" ? "text-fg-3" : ""}`}>{finding.title}</span>
+                <span className={`min-w-0 flex-1 truncate font-medium ${finding.state === "dismissed" || finding.state === "resolved" ? "text-fg-3" : ""}`}>{finding.title}</span>
+                <FollowupBadge status={finding.followupStatus} state={finding.state} />
                 <FindingStateBadge state={finding.state} />
                 <Icon name="chevronRight" className="size-4 text-fg-3 group-hover:text-fg" />
               </button>

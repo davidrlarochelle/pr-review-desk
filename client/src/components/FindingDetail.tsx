@@ -117,7 +117,8 @@ export default function FindingDetail({
   }
 
   const isPosted = finding.state === "posted";
-  const isDismissed = finding.state === "dismissed";
+  // A finding a later run found fixed reopens the same way a dismissed one does.
+  const isDismissed = finding.state === "dismissed" || finding.state === "resolved";
 
   const handleBlurSave = async () => {
     if (comment === (finding.draftComment ?? finding.suggestedComment)) return;
@@ -166,10 +167,16 @@ export default function FindingDetail({
       ? `https://github.com/${review?.repo ?? repo}/blob/HEAD/${finding.file}#L${finding.startLine}${finding.endLine ? `-L${finding.endLine}` : ""}`
       : null;
 
+  const FOLLOWUP_TITLE: Record<string, string> = { resolved: "Fixed by later commits", still_present: "Still there after later commits", unclear: "Later commits: unclear" };
   const evidenceLeft = [
+    finding.followupStatus && {
+      title: FOLLOWUP_TITLE[finding.followupStatus],
+      body: finding.followupNote || "No note from the second pass.",
+      tone: finding.followupStatus === "resolved" ? ("summary" as const) : ("info" as const),
+    },
     finding.background && { title: "Background", body: finding.background, tone: "info" as const },
     finding.problem && { title: "Problem", body: finding.problem, tone: "problem" as const },
-  ].filter(Boolean) as { title: string; body: string; tone: "info" | "problem" }[];
+  ].filter(Boolean) as { title: string; body: string; tone: "info" | "problem" | "summary" }[];
   const hasEvidence = evidenceLeft.length > 0 || !!finding.suggestedFix;
 
   const evidence = hasEvidence && (
@@ -275,7 +282,7 @@ export default function FindingDetail({
             <Button variant={isDismissed ? "plain" : "danger"} onClick={handleDismissToggle} disabled={isPosted || dismissFinding.loading || reopenFinding.loading}>
               {isDismissed ? "Reopen" : "Dismiss"}
             </Button>
-            <Button variant="primary" onClick={handlePost} disabled={isPosted || postFinding.loading}>
+            <Button variant="primary" onClick={handlePost} disabled={isPosted || finding.state === "resolved" || postFinding.loading}>
               <Icon name="send" />
               {isPosted ? "Posted" : "Post comment"}
             </Button>

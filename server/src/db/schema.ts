@@ -87,6 +87,25 @@ export function migrate(database: Database.Database): void {
       value TEXT NOT NULL
     );
   `);
+  addMissingColumns(database, "review_runs", {
+    effort_level: "TEXT",
+    diff_files: "INTEGER",
+    sent_files: "INTEGER",
+    omitted_files: "TEXT NOT NULL DEFAULT '[]'",
+    truncated_files: "TEXT NOT NULL DEFAULT '[]'",
+    // The commit the run read, and for a follow-up run the commit it started from.
+    head_sha: "TEXT",
+    base_sha: "TEXT",
+    mode: "TEXT NOT NULL DEFAULT 'full'",
+    // What the reviewer told the agent for this run, verbatim.
+    instructions: "TEXT",
+  });
+  addMissingColumns(database, "findings", {
+    run_id: "TEXT",
+    followup_status: "TEXT",
+    followup_note: "TEXT",
+    created_at: "TEXT",
+  });
 }
 
 /** CREATE TABLE IF NOT EXISTS leaves existing tables alone: columns added later go through here. Additive only. */
@@ -105,12 +124,5 @@ export function getDb(): Database.Database {
 
   instance = new Database(DB_PATH);
   migrate(instance);
-  addMissingColumns(instance, "review_runs", {
-    effort_level: "TEXT",
-    diff_files: "INTEGER",
-    sent_files: "INTEGER",
-    omitted_files: "TEXT NOT NULL DEFAULT '[]'",
-    truncated_files: "TEXT NOT NULL DEFAULT '[]'",
-  });
   return instance;
 }

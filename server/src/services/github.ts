@@ -1,4 +1,5 @@
 import { execFile } from "node:child_process";
+import { DISCUSSION_QUERY, parseDiscussion, type PrDiscussion } from "./discussion";
 import { promisify } from "node:util";
 import { getDb } from "../db/schema";
 import { track } from "../db/telemetry";
@@ -262,50 +263,11 @@ export async function fetchPrSnapshot(repo: string, number: number): Promise<PrS
   return JSON.parse(stdout) as PrSnapshot;
 }
 
-export interface ExistingReviewComment {
-  author: string;
-  path: string | null;
-  line: number | null;
-  body: string;
-  url: string;
-}
-
-export interface ExistingReview {
-  author: string;
-  state: string;
-  body: string;
-  url: string;
-  submittedAt: string;
-}
-
-export async function fetchExistingReviews(
-  repo: string,
-  number: number
-): Promise<{ reviews: ExistingReview[]; comments: ExistingReviewComment[] }> {
-  const [reviewsRaw, commentsRaw] = await Promise.all([
-    runGh(["api", "--paginate", `repos/${repo}/pulls/${number}/reviews`]),
-    runGh(["api", "--paginate", `repos/${repo}/pulls/${number}/comments`]),
-  ]);
-
-  const reviews = (JSON.parse(reviewsRaw) as Record<string, unknown>[])
-    .map((r) => ({
-      author: (r.user as { login?: string })?.login ?? "",
-      state: String(r.state ?? ""),
-      body: String(r.body ?? ""),
-      url: String(r.html_url ?? ""),
-      submittedAt: String(r.submitted_at ?? ""),
-    }))
-    .filter((r) => r.body.trim() !== "" || r.state !== "COMMENTED");
-
-  const comments = (JSON.parse(commentsRaw) as Record<string, unknown>[]).map((c) => ({
-    author: (c.user as { login?: string })?.login ?? "",
-    path: typeof c.path === "string" ? c.path : null,
-    line: typeof c.line === "number" ? c.line : typeof c.original_line === "number" ? c.original_line : null,
-    body: String(c.body ?? ""),
-    url: String(c.html_url ?? ""),
-  }));
-
-  return { reviews, comments };
+/** Reviews, conversation and inline threads with their replies, in one GraphQL call (first 100 of each). */
+export async function fetchPrDiscussion(repo: string, number: number): Promise<PrDiscussion> {
+  const [owner, name] = repo.split("/");
+  const raw = await runGh(["api", "graphql", "-f", `query=${DISCUSSION_QUERY.replace(/\s+/g, " ")}`, "-f", `owner=${owner}`, "-f", `name=${name}`, "-F", `number=${number}`]);
+  return parseDiscussion(JSON.parse(raw));
 }
 
 export async function getHeadSha(repo: string, number: number): Promise<string> {

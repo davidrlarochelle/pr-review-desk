@@ -24,8 +24,22 @@ export function FindingStateBadge({ state }: { state: string }) {
       ? "bg-st-reported-bg text-st-reported-fg"
       : state === "dismissed"
       ? "bg-subtle text-fg-3 line-through"
+      : state === "resolved"
+      ? "bg-success-soft text-success-ink"
       : "bg-surface text-fg";
   return <span className={`${BLOCK} h-[22px] ${cls}`}>{state}</span>;
+}
+
+const FOLLOWUP: Record<string, { label: string; cls: string }> = {
+  resolved: { label: "fixed", cls: "text-success-ink" },
+  still_present: { label: "still there", cls: "text-warn-ink" },
+  unclear: { label: "unclear", cls: "text-fg-3" },
+};
+
+/** What a later run said about an earlier finding. An open one judged fixed already reads as the resolved state. */
+export function FollowupBadge({ status, state }: { status: string | null; state: string }) {
+  const f = status && !(status === "resolved" && state === "resolved") ? FOLLOWUP[status] : undefined;
+  return f ? <span className={`shrink-0 label-caps ${f.cls}`}>{f.label}</span> : null;
 }
 
 const MY_REVIEW: Record<MyReviewState, { label: string; cls: string }> = {
