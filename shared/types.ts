@@ -65,6 +65,8 @@ export interface FindingRow {
   created_at: string | null;
   followup_status: string | null;
   followup_note: string | null;
+  /** Who wrote it: NULL for the Desk's own runs, 'deadpool' for a finding read from a Deadpool verdict file. */
+  source: string | null;
 }
 
 export interface ReviewRow {
@@ -140,7 +142,11 @@ export interface FindingDto {
   postedAs: "comment" | "pending-review";
   references: Reference[];
   postAnchor: PostAnchor;
+  /** deadpool: read from a Deadpool verdict (~/.cerebro/revues), not produced by a Desk run. */
+  source: FindingSource;
 }
+
+export type FindingSource = "desk" | "deadpool";
 
 export interface PostAnchor {
   kind: "line" | "file" | "pull-request";

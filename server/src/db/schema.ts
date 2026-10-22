@@ -105,6 +105,8 @@ export function migrate(database: Database.Database): void {
     followup_status: "TEXT",
     followup_note: "TEXT",
     created_at: "TEXT",
+    // NULL for the Desk's own runs; 'deadpool' for findings imported from a Deadpool verdict file.
+    source: "TEXT",
   });
 
   // Notification history: review outcomes and the GitHub events the poller saw. target is a JSON ReviewTarget.

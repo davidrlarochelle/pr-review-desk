@@ -17,6 +17,7 @@ export function isTouched(row: Pick<FindingRow, "state" | "draft_comment" | "sug
  * whole change again, so it finds them again); a follow-up run reads only the new commits, so it keeps
  * every earlier finding and records its verdict on each. A finding judged resolved while still open
  * leaves the open list; a posted or dismissed one keeps its state and just carries the verdict.
+ * Findings imported from Deadpool (source set) are never replaced by a run.
  */
 export function saveRunFindings(
   db: Database.Database,
@@ -25,7 +26,8 @@ export function saveRunFindings(
   const { reviewId, runId, mode, findings, verdicts } = input;
   const save = db.transaction(() => {
     // Reading the same run's report again replaces what that run saved, so it never doubles up.
-    const replaceable = mode === "full" ? "review_id = ?" : "review_id = ? AND run_id = ?";
+    // Deadpool's findings come from its verdict files, not from a run: a run never replaces them.
+    const replaceable = (mode === "full" ? "review_id = ?" : "review_id = ? AND run_id = ?") + " AND source IS NULL";
     const existing = db
       .prepare(`SELECT id, state, draft_comment, suggested_comment FROM findings WHERE ${replaceable}`)
       .all(...(mode === "full" ? [reviewId] : [reviewId, runId])) as Pick<FindingRow, "id" | "state" | "draft_comment" | "suggested_comment">[];

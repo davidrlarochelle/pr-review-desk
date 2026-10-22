@@ -51,5 +51,6 @@ export function toFindingDto(row: FindingRow, patches: FilePatch[]): FindingDto 
     postedAs: row.posted_as as FindingDto["postedAs"],
     references: JSON.parse(row.references_json || "[]"),
     postAnchor,
+    source: row.source === "deadpool" ? "deadpool" : "desk",
   };
 }

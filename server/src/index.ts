@@ -19,6 +19,7 @@ import type { WatchEvent } from "./services/github-watch";
 import { reviewOutcomes } from "./services/review-engine";
 import { jevClientFromEnv, judgeFindingsOnOutcome } from "./services/jev";
 import { handleAutoReview } from "./services/auto-review";
+import { deadpoolReviewsDir, startDeadpoolImport } from "./services/deadpool-reviews";
 
 const db = getDb();
 const stuck = db.prepare("UPDATE reviews SET status = 'failed', error = 'Server restarted during review' WHERE status IN ('running', 'queued')").run();
@@ -78,4 +79,8 @@ app.listen(port, () => {
   console.log(`repos: ${configuredRepos().join(", ") || "(none yet, pick them in the app)"}`);
   console.log(`local repos: ${configuredLocalRepos().map((r) => r.label).join(", ") || "(none)"}`);
   startGithubPoller();
+  if (fs.existsSync(deadpoolReviewsDir())) {
+    console.log(`deadpool verdicts: ${deadpoolReviewsDir()}`);
+    startDeadpoolImport(getDb, configuredLocalRepos);
+  }
 });

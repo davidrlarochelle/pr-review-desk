@@ -276,6 +276,7 @@ export default function LocalReviewDetail({
                   {finding.file}:{finding.startLine ?? "?"}
                 </span>
                 <span className={`min-w-0 flex-1 truncate font-medium ${finding.state === "dismissed" || finding.state === "resolved" ? "text-fg-3" : ""}`}>{finding.title}</span>
+                {finding.source === "deadpool" && <span className="shrink-0 label-caps text-fg-3">Deadpool</span>}
                 <FollowupBadge status={finding.followupStatus} state={finding.state} />
                 <FindingStateBadge state={finding.state} />
                 <Icon name="chevronRight" className="size-4 text-fg-3 group-hover:text-fg" />
