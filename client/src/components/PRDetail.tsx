@@ -26,6 +26,7 @@ import SeverityBadge from "./SeverityBadge";
 import StatusBadge, { FindingStateBadge, FollowupBadge } from "./StatusBadge";
 import CancelReviewButton from "./CancelReviewButton";
 import { MutePrToggle } from "./AutoReviewToggles";
+import ApproveButton from "./ApproveButton";
 import Button, { LinkButton } from "./ui/Button";
 import Card, { Band, Chip } from "./ui/Card";
 import { Checkbox, Input, Select } from "./ui/Field";
@@ -40,6 +41,7 @@ import Pager from "./ui/Pager";
 import { focusedAttr, useHotkeys } from "../hooks/useHotkeys";
 import { LAUNCH_DEFAULTS, LAUNCH_KEY, useStoredState } from "../lib/storage";
 import { loadPrOrder } from "../lib/url-state";
+import { JEV_PRECHECK_DEFAULT, JEV_PRECHECK_KEY, jevPrechecked } from "../lib/precheck";
 import NotFound from "./ui/NotFound";
 import { ReimportButton, ScopeNote, SessionButton } from "./RunSession";
 
@@ -72,7 +74,7 @@ export default function PRDetail({
   const setSkillsInput = (skills: string) => setLaunch((l) => ({ ...l, skills }));
   const [instructions, setInstructions] = useReviewInstructions(`pr:${repo}#${number}`);
   // What this screen was showing survives a refresh, in this tab only.
-  const [view, setView] = useStoredState("session", `prd:view:pr:${repo}#${number}`, { thread: false, selected: [] as string[] });
+  const [view, setView] = useStoredState("session", `prd:view:pr:${repo}#${number}`, { thread: false, selected: [] as string[], precheckedRun: "" });
   const showThread = view.thread;
   const setShowThread = (thread: boolean) => setView((v) => ({ ...v, thread }));
   const selected = useMemo(() => new Set(view.selected), [view.selected]);
@@ -151,6 +153,17 @@ export default function PRDetail({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [review, sortedFindings]);
 
+  // Once per reported run, the findings Jev judged to hold are checked in advance; the others stay unchecked.
+  const [precheck, setPrecheck] = useStoredState("local", JEV_PRECHECK_KEY, { value: JEV_PRECHECK_DEFAULT });
+  useEffect(() => {
+    if (review?.status !== "reported" || view.precheckedRun === review.updatedAt) return;
+    // Jev judges after the review reports: wait for its answers rather than marking the run done with none.
+    if (!sortedFindings.some((f) => f.state === "open" && f.jevHolds != null)) return;
+    const ids = jevPrechecked(sortedFindings.map((f) => ({ ...f, jevHolds: f.jevHolds ?? null })), precheck.value);
+    setView((v) => ({ ...v, precheckedRun: review.updatedAt, selected: [...new Set([...v.selected, ...ids])] }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [review, sortedFindings]);
+
   const toggleSelected = (id: string) => {
     setSelected((prev) => {
       const next = new Set(prev);
@@ -209,6 +222,7 @@ export default function PRDetail({
       <ShellActions>
         {review && <StatusBadge status={review.status} />}
         <MutePrToggle repo={repo} number={number} />
+        <ApproveButton repo={repo} number={number} />
         <LinkButton size="sm" href={githubUrl} target="_blank" rel="noreferrer">
           <Icon name="github" />
           Open on GitHub
@@ -427,6 +441,22 @@ export default function PRDetail({
               </span>
             )}
             <div className="flex-1" />
+            <label className="inline-flex items-center gap-1.5 text-xs text-fg-3" title="Findings Jev judges to hold at or above this are checked when a review reports">
+              Jev pre-check ≥
+              <input
+                type="number"
+                min={0}
+                max={100}
+                step={5}
+                value={Math.round(precheck.value * 100)}
+                onChange={(e) => {
+                  const pct = Number(e.target.value);
+                  if (Number.isFinite(pct) && pct >= 0 && pct <= 100) setPrecheck({ value: pct / 100 });
+                }}
+                className="w-14 edge bg-surface px-1.5 py-0.5 font-mono text-xs"
+              />
+              %
+            </label>
             <Button size="sm" variant="acid" onClick={handlePostSelected} disabled={selected.size === 0 || postFinding.loading} aria-keyshortcuts="P" title="Post selected (P)">
               Post selected <span className="font-mono">({selected.size})</span>
             </Button>

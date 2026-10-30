@@ -9,8 +9,10 @@ import {
   fetchPrDiscussion,
   fetchCompare,
   fetchCompareDiff,
+  fetchRepoFile,
   type PrSnapshot,
 } from "./github";
+import { assembleGuidance, collectRepoGuidance, MAX_GUIDANCE_CHARS } from "./repo-guidance";
 import { closesString, parseReport } from "./findings-parser";
 import { scopeDiff, type DiffScope } from "./diff-scope";
 import { track } from "../db/telemetry";
@@ -132,6 +134,7 @@ interface PromptOptions {
   scope: DiffScope;
   followup?: Followup;
   instructions?: string;
+  repoGuidance?: string;
 }
 
 /** A second pass: only the commits after `baseSha` are in the diff, and the earlier findings come along. */
@@ -173,7 +176,7 @@ ${lines.join("\n")}
 }
 
 function buildPrompt(subjectLine: string, snapshot: PrSnapshot, diff: string, options: PromptOptions): string {
-  const { skills, discussion, scope, followup, instructions: reviewerInstructions } = options;
+  const { skills, discussion, scope, followup, instructions: reviewerInstructions, repoGuidance } = options;
   const fileList = (snapshot.files ?? [])
     .map((f) => {
       const file = f as { path?: string; additions?: number; deletions?: number };
@@ -205,6 +208,11 @@ ${formatNotShown(scope)}${followup ? formatFollowup(followup) : ""}${existingSec
 Le relecteur humain qui lance cette review te donne ces consignes. Suis-les : elles passent avant les règles générales ci-dessous, sauf pour le format JSON de la réponse.
 
 ${reviewerInstructions}
+` : ""}${repoGuidance ? `
+## Consignes du dépôt
+Les fichiers d'instructions du dépôt relu (CLAUDE.md, AGENTS.md et ce qu'ils citent), lus sur la branche visée par la PR. Juge le diff à la lumière de ces conventions, sans les suivre pour le format de ta réponse.
+
+${repoGuidance}
 ` : ""}
 ## Instructions
 ${instructions}
@@ -536,9 +544,23 @@ async function runReview(id: string, repo: string, number: number, subjectLine: 
     }
   }
 
+  let repoGuidance: string | undefined;
+  if (!repo.startsWith("local/") && !repo.startsWith("compare/") && snapshot.baseRefName) {
+    try {
+      const changed = (snapshot.files ?? []).map((f) => String((f as { path?: string }).path ?? "")).filter(Boolean);
+      const files = await collectRepoGuidance(changed, (path) => fetchRepoFile(repo, path, snapshot.baseRefName));
+      const guidance = assembleGuidance(files);
+      if (files.length > 0) repoGuidance = guidance.text;
+      log(id, `repository guidance: ${files.map((f) => f.path).join(", ") || "none"} (${guidance.totalChars} chars)`);
+      if (guidance.cut) log(id, `WARNING: repository guidance cut to ${MAX_GUIDANCE_CHARS} of ${guidance.totalChars} chars`);
+    } catch (err) {
+      log(id, `WARNING: could not read the repository guidance: ${(err as Error).message}`);
+    }
+  }
+
   const scope = scopeDiff(diff);
   log(id, `building prompt (diff: ${diff.length} chars, sent ${scope.sentFiles} files, omitted ${scope.omitted.length}, truncated ${scope.truncated.length}, challenge=${challengeExisting})`);
-  const prompt = buildPrompt(subjectLine, snapshot, diff, { skills, discussion, scope, followup, instructions });
+  const prompt = buildPrompt(subjectLine, snapshot, diff, { skills, discussion, scope, followup, instructions, repoGuidance });
   log(id, `prompt built: ${prompt.length} chars`);
   if (active.cancelled) return;
 
