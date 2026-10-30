@@ -233,6 +233,17 @@ export async function listOrgPullRequests(org: string, force = false): Promise<P
   return prs;
 }
 
+/** A file's text at `ref`, or null when it does not exist there. */
+export async function fetchRepoFile(repo: string, path: string, ref: string): Promise<string | null> {
+  const url = `repos/${repo}/contents/${path.split("/").map(encodeURIComponent).join("/")}?ref=${encodeURIComponent(ref)}`;
+  try {
+    return await runGh(["api", url, "-H", "Accept: application/vnd.github.raw"]);
+  } catch (err) {
+    if (/\b404\b|Not Found/.test((err as Error).message)) return null;
+    throw err;
+  }
+}
+
 export async function fetchPrDiff(repo: string, number: number): Promise<string> {
   return runGh(["pr", "diff", String(number), "-R", repo]);
 }
