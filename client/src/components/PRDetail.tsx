@@ -25,6 +25,7 @@ interface PrSnapshotResponse {
 import SeverityBadge from "./SeverityBadge";
 import StatusBadge, { FindingStateBadge, FollowupBadge } from "./StatusBadge";
 import CancelReviewButton from "./CancelReviewButton";
+import { MutePrToggle } from "./AutoReviewToggles";
 import Button, { LinkButton } from "./ui/Button";
 import Card, { Band, Chip } from "./ui/Card";
 import { Checkbox, Input, Select } from "./ui/Field";
@@ -207,6 +208,7 @@ export default function PRDetail({
     <main className="flex flex-col gap-4 px-10 pb-10 pt-5">
       <ShellActions>
         {review && <StatusBadge status={review.status} />}
+        <MutePrToggle repo={repo} number={number} />
         <LinkButton size="sm" href={githubUrl} target="_blank" rel="noreferrer">
           <Icon name="github" />
           Open on GitHub

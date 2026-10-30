@@ -38,7 +38,9 @@ export default function WatchSettingsForm() {
 
   const submit = async () => {
     try {
-      const saved = await save.mutate(draft);
+      // The switches in the header and on a PR save themselves; this form must not overwrite them with stale values.
+      const { autoReviewPaused: _paused, autoReviewMutedPrs: _muted, ...fields } = draft;
+      const saved = await save.mutate(fields);
       setDraft(saved);
       refetch();
       toast({ kind: "success", message: "Settings saved" });
