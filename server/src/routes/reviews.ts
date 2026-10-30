@@ -2,6 +2,7 @@ import { Router } from "express";
 import { getDb } from "../db/schema";
 import { reviewEvents, reviewOutcomes, reviewId, startReview, getThreadLog, reimportRun, cleanInstructions, cancelReview } from "../services/review-engine";
 import { splitUnifiedDiff, findPatchForFile } from "../services/diff-utils";
+import { approvalWarnings, failingChecks } from "../services/approval";
 import { toFindingDto, toReviewDto } from "../services/dto";
 import { getRunSession, listRuns } from "../services/run-log";
 import type { FindingRow, ReviewEvent, ReviewOutcome, ReviewRow } from "../../../shared/types";
@@ -137,6 +138,18 @@ reviewsRouter.post("/reviews/:owner/:name/:number/cancel", (req, res) => {
     return;
   }
   res.json({ ok: true });
+});
+
+reviewsRouter.get("/reviews/:owner/:name/:number/approval-check", async (req, res) => {
+  const { fetchCheckRollup } = await import("../services/github");
+  const repo = `${req.params.owner}/${req.params.name}`;
+  const num = Number(req.params.number);
+  try {
+    const checks = failingChecks(await fetchCheckRollup(repo, num));
+    res.json({ warnings: approvalWarnings(loadFindings(reviewId(repo, num)), checks) });
+  } catch (err) {
+    res.status(502).json({ error: err instanceof Error ? err.message : String(err) });
+  }
 });
 
 reviewsRouter.post("/reviews/:owner/:name/:number/submit", async (req, res) => {
