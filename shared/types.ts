@@ -144,6 +144,8 @@ export interface FindingDto {
   postAnchor: PostAnchor;
   /** deadpool: read from a Deadpool verdict (~/.cerebro/revues), not produced by a Desk run. */
   source: FindingSource;
+  /** Jev's probability that the finding holds (null = not judged); only on the latest-review read. */
+  jevHolds?: number | null;
 }
 
 export type FindingSource = "desk" | "deadpool";

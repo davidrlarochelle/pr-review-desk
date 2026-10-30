@@ -76,7 +76,10 @@ reviewsRouter.get("/reviews/latest", (req, res) => {
   }
 
   const patches = splitUnifiedDiff(review.diff);
-  const findings = loadFindings(id).map((row) => toFindingDto(row, patches));
+  const holds = new Map(
+    (getDb().prepare("SELECT finding_id, holds FROM finding_judgments WHERE review_id = ?").all(id) as { finding_id: string; holds: number | null }[]).map((j) => [j.finding_id, j.holds])
+  );
+  const findings = loadFindings(id).map((row) => ({ ...toFindingDto(row, patches), jevHolds: holds.get(row.id) ?? null }));
   res.json({ ...toReviewDto(review), findings });
 });
 
