@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useMutation, useQuery } from "../hooks/useApi";
 import type { CompareSummaryDto, FindingDto, RepoRefsDto, ReviewDto } from "../../../shared/types";
 import StatusBadge from "./StatusBadge";
+import CancelReviewButton from "./CancelReviewButton";
 import Button from "./ui/Button";
 import Card, { Chip, Eyebrow } from "./ui/Card";
 import Combobox from "./ui/Combobox";
@@ -212,6 +213,7 @@ export default function CompareView({
             <Icon name={latest?.status === "failed" ? "refresh" : "play"} />
             {isRunning ? "Review running…" : latest?.status === "failed" ? "Retry review" : "Start review"}
           </Button>
+          {latest && isRunning && <CancelReviewButton repo={latest.repo} number={latest.number} onDone={refetchLatest} />}
           {latest && <StatusBadge status={latest.status} />}
         </div>
         <ReviewInstructions id="compare-instructions" value={instructions} onChange={setInstructions} disabled={isRunning} />

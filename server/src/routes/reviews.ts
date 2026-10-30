@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { getDb } from "../db/schema";
-import { reviewEvents, reviewOutcomes, reviewId, startReview, getThreadLog, reimportRun, cleanInstructions } from "../services/review-engine";
+import { reviewEvents, reviewOutcomes, reviewId, startReview, getThreadLog, reimportRun, cleanInstructions, cancelReview } from "../services/review-engine";
 import { splitUnifiedDiff, findPatchForFile } from "../services/diff-utils";
 import { toFindingDto, toReviewDto } from "../services/dto";
 import { getRunSession, listRuns } from "../services/run-log";
@@ -127,6 +127,16 @@ reviewsRouter.get("/reviews/:owner/:name/:number/events", (req, res) => {
   req.on("close", () => {
     reviewEvents.off(id, listener);
   });
+});
+
+reviewsRouter.post("/reviews/:owner/:name/:number/cancel", (req, res) => {
+  const id = reviewId(`${req.params.owner}/${req.params.name}`, Number(req.params.number));
+  rlog(`POST cancel ${id}`);
+  if (!cancelReview(id)) {
+    res.status(409).json({ error: "no review of this target is running" });
+    return;
+  }
+  res.json({ ok: true });
 });
 
 reviewsRouter.post("/reviews/:owner/:name/:number/submit", async (req, res) => {

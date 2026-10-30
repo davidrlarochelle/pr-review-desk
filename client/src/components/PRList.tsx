@@ -44,6 +44,7 @@ function statusOf(pr: PullRequestDto): PrStatus {
 
 const REVIEW_RANK: Record<PullRequestDto["reviewStatus"], number> = {
   none: 0,
+  cancelled: 0,
   queued: 1,
   running: 2,
   failed: 3,

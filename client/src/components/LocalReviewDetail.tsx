@@ -7,6 +7,7 @@ import { useSSE } from "../hooks/useSSE";
 import type { FindingDto, ReviewDto } from "../../../shared/types";
 import SeverityBadge from "./SeverityBadge";
 import StatusBadge, { FindingStateBadge, FollowupBadge } from "./StatusBadge";
+import CancelReviewButton from "./CancelReviewButton";
 import Button from "./ui/Button";
 import Card, { Band, Chip } from "./ui/Card";
 import Icon from "./ui/Icon";
@@ -126,6 +127,7 @@ export default function LocalReviewDetail({
     <main className="flex flex-col gap-4 px-10 pb-10 pt-5">
       <ShellActions>
         {review && <StatusBadge status={review.status} />}
+        {isRunning && <CancelReviewButton repo={repo} number={number} onDone={refetchReview} />}
         <Button size="sm" onClick={onBack} aria-keyshortcuts="Escape" title={`${backLabel} (Esc)`}>
           <Icon name="arrowLeft" />
           {backLabel}

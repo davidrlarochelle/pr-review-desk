@@ -28,7 +28,7 @@ process.stdin.on("end", () => {
   const prompt = Buffer.concat(chunks).toString("utf8");
   const reportFile = prompt.includes("src/math.ts") ? "report-local.json" : "report-pr.json";
   const report = fs.readFileSync(path.join(FIXTURES, reportFile), "utf8");
-  fs.appendFileSync(path.join(WORLD, "claude-calls.jsonl"), `${JSON.stringify({ at: new Date().toISOString(), args, promptChars: prompt.length, prompt, report: reportFile })}\n`);
+  fs.appendFileSync(path.join(WORLD, "claude-calls.jsonl"), `${JSON.stringify({ at: new Date().toISOString(), pid: process.pid, args, promptChars: prompt.length, prompt, report: reportFile })}\n`);
 
   const model = args.includes("--model") ? args[args.indexOf("--model") + 1] : "default";
   const session = "e2e-fake-session";
