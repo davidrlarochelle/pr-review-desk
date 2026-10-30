@@ -1,6 +1,6 @@
 import type { MyReviewState } from "../../../shared/types";
 
-const LABELS: Record<string, string> = { none: "No review", queued: "Queued", running: "Running", reported: "Reported", failed: "Failed" };
+const LABELS: Record<string, string> = { none: "No review", queued: "Queued", running: "Running", reported: "Reported", failed: "Failed", cancelled: "Cancelled" };
 
 // No dot, no ping — the fill is the signal.
 const STYLES: Record<string, string> = {
@@ -9,6 +9,7 @@ const STYLES: Record<string, string> = {
   running: "bg-st-running-bg text-st-running-fg",
   reported: "bg-st-reported-bg text-st-reported-fg",
   failed: "bg-st-failed-bg text-st-failed-fg",
+  cancelled: "bg-st-none-bg text-st-none-fg",
 };
 
 const BLOCK = "inline-flex items-center whitespace-nowrap edge px-2 label-caps text-[length:calc(11px*var(--font-scale))] tracking-[.07em] leading-none";

@@ -15,10 +15,13 @@ import {
   ghFailures,
   ghWrites,
   holdClaude,
+  notificationKinds,
+  processAlive,
   releaseClaude,
   resetWorld,
   reviewStatus,
   reviewsLike,
+  runStatuses,
   seedReview,
   selectedRepos,
 } from "./harness/world-state";
@@ -171,5 +174,33 @@ export async function reviewWithInstructions({ app, agent, screen }: Desk): Prom
   expect(calls).toHaveLength(1);
   const section = calls[0].prompt.split("## Consignes du relecteur")[1]?.split("\n## ")[0] ?? "";
   expect(section).toContain(instructions);
+  expect(ghFailures()).toEqual([]);
+}
+
+/** 8. Cancel a running review: the agent process stops, the review reads cancelled, and nothing is notified. */
+export async function cancelRunningReview({ app, agent, screen }: Desk): Promise<void> {
+  resetWorld({ repos: [PR.repo] });
+  await app.open(`/prs/${PR.repo}/${PR.number}`);
+  await expect(screen.getByRole("heading", { name: /add retry to the payment client/i, level: 1 })).toBeVisible();
+
+  holdClaude();
+  await agent.act("start a review of this pull request");
+  await expect(screen.getByRole("button", /review running/i)).toBeVisible();
+
+  await agent.act("cancel the running review");
+  await expect(screen.getByText(/^cancelled$/i)).toBeVisible({ timeout: 10_000 });
+  await expect(screen.getByRole("button", /^start review$/i)).toBeVisible();
+
+  const id = `${PR.repo}#${PR.number}`;
+  expect(reviewStatus(id)).toBe("cancelled");
+  expect(runStatuses(id)).toEqual(["cancelled"]);
+  const [call] = claudeCalls();
+  expect(processAlive(call.pid)).toBe(false);
+
+  // Released, a live agent would report within a second: a stopped one leaves the review cancelled.
+  releaseClaude();
+  await new Promise((r) => setTimeout(r, 1_500));
+  expect(reviewStatus(id)).toBe("cancelled");
+  expect(notificationKinds()).toEqual([]);
   expect(ghFailures()).toEqual([]);
 }

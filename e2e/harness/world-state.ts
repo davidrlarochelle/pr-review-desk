@@ -42,7 +42,7 @@ function readJsonl<T>(file: string): T[] {
  */
 export function resetWorld({ repos }: { repos?: string[] } = {}): void {
   withDb((db) => {
-    db.exec("BEGIN; DELETE FROM findings; DELETE FROM review_runs; DELETE FROM reviews; DELETE FROM pr_cache; DELETE FROM settings;");
+    db.exec("BEGIN; DELETE FROM findings; DELETE FROM review_runs; DELETE FROM reviews; DELETE FROM pr_cache; DELETE FROM settings; DELETE FROM notifications;");
     if (repos) db.prepare("INSERT INTO settings (key, value) VALUES ('selected_repos', ?)").run(JSON.stringify(repos));
     db.exec("COMMIT");
   });
@@ -60,7 +60,17 @@ export const ghCalls = (): string[][] => readJsonl<{ args: string[] }>("gh-calls
 export const ghFailures = () => readJsonl<{ args: string[]; message: string }>("gh-failures.jsonl");
 
 /** Every run of the fake claude, in order, with the prompt it was sent. */
-export const claudeCalls = () => readJsonl<{ args: string[]; prompt: string; report: string }>("claude-calls.jsonl");
+export const claudeCalls = () => readJsonl<{ pid: number; args: string[]; prompt: string; report: string }>("claude-calls.jsonl");
+
+/** Whether a process still runs: signal 0 only checks that it exists. */
+export function processAlive(pid: number): boolean {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 /** Keeps the next reviews running until releaseClaude(). */
 export const holdClaude = () => fs.writeFileSync(path.join(WORLD, "claude-hold"), "");
@@ -77,6 +87,12 @@ export const reviewStatus = (id: string): string | null =>
 
 export const reviewsLike = (pattern: string): { id: string; status: string }[] =>
   withDb((db) => db.prepare("SELECT id, status FROM reviews WHERE id LIKE ?").all(pattern) as unknown as { id: string; status: string }[]);
+
+export const runStatuses = (reviewId: string): string[] =>
+  withDb((db) => (db.prepare("SELECT status FROM review_runs WHERE review_id = ? ORDER BY started_at").all(reviewId) as unknown as { status: string }[]).map((r) => r.status));
+
+export const notificationKinds = (): string[] =>
+  withDb((db) => (db.prepare("SELECT kind FROM notifications ORDER BY id").all() as unknown as { kind: string }[]).map((r) => r.kind));
 
 export const findingByTitle = (title: string): FindingRow | undefined =>
   withDb((db) => db.prepare("SELECT id, title, state, draft_comment, comment_url FROM findings WHERE title = ?").get(title) as unknown as FindingRow | undefined);

@@ -106,7 +106,7 @@ export interface PullRequest {
 export type MyReviewState = "APPROVED" | "CHANGES_REQUESTED" | "COMMENTED";
 
 export interface PullRequestDto extends PullRequest {
-  reviewStatus: "none" | "queued" | "running" | "reported" | "failed";
+  reviewStatus: "none" | "queued" | "running" | "reported" | "failed" | "cancelled";
   /** null when the viewer has not reviewed, or when the cached list predates latestReviews (refresh fills it). */
   myReview: MyReviewState | null;
   openFindings: number;
@@ -154,7 +154,7 @@ export interface ReviewDto {
   repo: string;
   number: number;
   title: string;
-  status: "queued" | "running" | "reported" | "failed";
+  status: "queued" | "running" | "reported" | "failed" | "cancelled";
   summary: string;
   error: string | null;
   skills: string[];
@@ -227,7 +227,7 @@ export interface ReviewRunRow {
 export interface ReviewRunDto {
   id: string;
   reviewId: string;
-  status: "running" | "reported" | "failed";
+  status: "running" | "reported" | "failed" | "cancelled";
   model: string | null;
   effort: string | null;
   maxTurns: number | null;

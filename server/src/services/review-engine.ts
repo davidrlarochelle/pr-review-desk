@@ -1,4 +1,4 @@
-import { spawn, spawnSync } from "node:child_process";
+import { spawn, spawnSync, type ChildProcess } from "node:child_process";
 import { EventEmitter } from "node:events";
 import { createHash, randomUUID } from "node:crypto";
 import os from "node:os";
@@ -29,6 +29,25 @@ export const reviewOutcomes = new EventEmitter();
 reviewOutcomes.setMaxListeners(0);
 
 const reviewTargets = new Map<string, ReviewTarget>();
+
+/** The review going on for an id, so it can be cancelled: before its agent starts, or while it runs. */
+interface ActiveReview {
+  cancelled: boolean;
+  runId?: string;
+  child?: ChildProcess;
+}
+
+const activeReviews = new Map<string, ActiveReview>();
+
+function beginActive(id: string): ActiveReview {
+  const active: ActiveReview = { cancelled: false };
+  activeReviews.set(id, active);
+  return active;
+}
+
+function endActive(id: string, active: ActiveReview): void {
+  if (activeReviews.get(id) === active) activeReviews.delete(id);
+}
 
 const CLAUDE_CANDIDATES = ["claude", `${os.homedir()}/.local/bin/claude`, "/opt/homebrew/bin/claude", "/usr/local/bin/claude"];
 
@@ -311,7 +330,7 @@ export function getThreadLog(id: string): string[] {
   return threadLogs.get(id) ?? [];
 }
 
-function runClaude(id: string, runId: string, prompt: string, model: string | undefined, effortLevel: string): Promise<string> {
+function runClaude(id: string, runId: string, prompt: string, model: string | undefined, effortLevel: string, active: ActiveReview): Promise<string> {
   return new Promise((resolve, reject) => {
     const claudePath = resolveClaudePath();
     const args = ["-p", "--output-format", "stream-json", "--verbose", "--tools", ""];
@@ -322,6 +341,7 @@ function runClaude(id: string, runId: string, prompt: string, model: string | un
     const child = spawn(claudePath, args, {
       stdio: ["pipe", "pipe", "pipe"],
     });
+    active.child = child;
 
     child.stdin.write(prompt);
     child.stdin.end();
@@ -409,6 +429,24 @@ function failReview(id: string, message: string): void {
   announce(id, { status: "failed", error: message });
 }
 
+/**
+ * Stops the review going on for this id: its agent process is killed, or never started if it was
+ * still being prepared. The review and its run read cancelled; no outcome is announced, so nothing
+ * is notified. False when no review of this id is going on.
+ */
+export function cancelReview(id: string): boolean {
+  const active = activeReviews.get(id);
+  if (!active || active.cancelled) return false;
+  active.cancelled = true;
+  log(id, `REVIEW CANCELLED${active.child ? `, killing pid ${active.child.pid}` : " before its agent started"}`);
+  active.child?.kill("SIGTERM");
+  if (active.runId) finishRun(active.runId, "cancelled");
+  getDb().prepare("UPDATE reviews SET status = 'cancelled', error = NULL, updated_at = ? WHERE id = ?").run(new Date().toISOString(), id);
+  track("review", "cancelled", { reviewId: id, runId: active.runId, payload: { agentStarted: !!active.child } });
+  emit(id, "status", { status: "cancelled" });
+  return true;
+}
+
 // With no tools the agent always answers in one turn, so effort sets how hard it thinks (claude --effort).
 const EFFORT_LEVEL: Record<string, string> = {
   quick: "low",
@@ -423,6 +461,7 @@ interface RunOptions {
   effort?: string;
   challengeExisting: boolean;
   instructions?: string;
+  active: ActiveReview;
 }
 
 const MAX_INSTRUCTIONS_CHARS = 4000;
@@ -459,7 +498,7 @@ async function followupBase(id: string, repo: string, headSha: string): Promise<
 }
 
 async function runReview(id: string, repo: string, number: number, subjectLine: string, snapshot: PrSnapshot, fullDiff: string, opts: RunOptions): Promise<void> {
-  const { skills, model, effort, challengeExisting, instructions } = opts;
+  const { skills, model, effort, challengeExisting, instructions, active } = opts;
   const headSha = snapshot.headRefOid ?? "";
 
   let diff = fullDiff;
@@ -501,9 +540,11 @@ async function runReview(id: string, repo: string, number: number, subjectLine: 
   log(id, `building prompt (diff: ${diff.length} chars, sent ${scope.sentFiles} files, omitted ${scope.omitted.length}, truncated ${scope.truncated.length}, challenge=${challengeExisting})`);
   const prompt = buildPrompt(subjectLine, snapshot, diff, { skills, discussion, scope, followup, instructions });
   log(id, `prompt built: ${prompt.length} chars`);
+  if (active.cancelled) return;
 
   const effortLevel = EFFORT_LEVEL[effort ?? "standard"] ?? "medium";
   const runId = createRun(id, prompt, { model, effort, effortLevel, skills, scope });
+  active.runId = runId;
   getDb()
     .prepare("UPDATE review_runs SET head_sha = ?, base_sha = ?, mode = ?, instructions = ? WHERE id = ?")
     .run(headSha || null, followup?.baseSha ?? null, mode, instructions ?? null, runId);
@@ -530,10 +571,12 @@ async function runReview(id: string, repo: string, number: number, subjectLine: 
   });
   const startedAt = Date.now();
   try {
-    await runAgent(id, runId, prompt, model, effortLevel, mode);
+    await runAgent(id, runId, prompt, model, effortLevel, mode, active);
+    if (active.cancelled) return;
     finishRun(runId, "reported");
     track("review", "run.reported", { reviewId: id, runId, repo, status: "ok", durationMs: Date.now() - startedAt, payload: runNumbers(runId) });
   } catch (err) {
+    if (active.cancelled) return;
     const message = err instanceof Error ? err.message : String(err);
     finishRun(runId, "failed", message);
     track("review", "run.failed", { reviewId: id, runId, repo, status: "error", durationMs: Date.now() - startedAt, payload: { error: message.slice(0, 2000), ...runNumbers(runId) } });
@@ -541,11 +584,12 @@ async function runReview(id: string, repo: string, number: number, subjectLine: 
   }
 }
 
-async function runAgent(id: string, runId: string, prompt: string, model: string | undefined, effortLevel: string, mode: RunMode): Promise<void> {
+async function runAgent(id: string, runId: string, prompt: string, model: string | undefined, effortLevel: string, mode: RunMode, active: ActiveReview): Promise<void> {
   log(id, `starting claude subprocess (run ${runId})...${model ? ` model=${model}` : " (default model)"} effort=${effortLevel}`);
   threadLogs.delete(id);
-  const assistantText = await runClaude(id, runId, prompt, model, effortLevel);
+  const assistantText = await runClaude(id, runId, prompt, model, effortLevel, active);
   log(id, `claude finished, output: ${assistantText.length} chars`);
+  if (active.cancelled) return;
   importReport(id, runId, mode, assistantText);
 }
 
@@ -644,9 +688,12 @@ export async function startReview(
 
   log(id, `launching review in background...${model ? ` model=${model}` : ""} effort=${effort ?? "standard"} challenge=${challengeExisting}`);
   const subjectLine = `Review GitHub pull request ${repo}#${number} — ${snapshot.title}`;
-  runReview(id, repo, number, subjectLine, snapshot, diff, { skills, model, effort, challengeExisting, instructions }).catch((err) => {
-    failReview(id, err instanceof Error ? err.message : String(err));
-  });
+  const active = beginActive(id);
+  runReview(id, repo, number, subjectLine, snapshot, diff, { skills, model, effort, challengeExisting, instructions, active })
+    .catch((err) => {
+      if (!active.cancelled) failReview(id, err instanceof Error ? err.message : String(err));
+    })
+    .finally(() => endActive(id, active));
 
   return id;
 }
@@ -723,9 +770,12 @@ export async function startLocalReview(
     .filter(Boolean)
     .join(" and ");
   const subjectLine = `Review the local branch \`${branch}\` (${scope}, diff vs \`${baseRef}\`) in repo ${repoLabel} — ${snapshot.title}`;
-  runReview(id, repo, number, subjectLine, snapshot, diff, { skills, model, effort, challengeExisting: false, instructions }).catch((err) => {
-    failReview(id, err instanceof Error ? err.message : String(err));
-  });
+  const active = beginActive(id);
+  runReview(id, repo, number, subjectLine, snapshot, diff, { skills, model, effort, challengeExisting: false, instructions, active })
+    .catch((err) => {
+      if (!active.cancelled) failReview(id, err instanceof Error ? err.message : String(err));
+    })
+    .finally(() => endActive(id, active));
 
   return { repo, number };
 }
@@ -810,9 +860,12 @@ export async function startCompareReview(
   emit(id, "status", { status: "running" });
 
   const subjectLine = `Review the ${compare.aheadBy} commit${compare.aheadBy > 1 ? "s" : ""} on \`${head}\` of ${repo} that are not in \`${base}\` yet — ${snapshot.title}`;
-  runReview(id, identity.repo, identity.number, subjectLine, snapshot, diff, { skills, model, effort, challengeExisting: false, instructions }).catch((err) => {
-    failReview(id, err instanceof Error ? err.message : String(err));
-  });
+  const active = beginActive(id);
+  runReview(id, identity.repo, identity.number, subjectLine, snapshot, diff, { skills, model, effort, challengeExisting: false, instructions, active })
+    .catch((err) => {
+      if (!active.cancelled) failReview(id, err instanceof Error ? err.message : String(err));
+    })
+    .finally(() => endActive(id, active));
 
   return identity;
 }

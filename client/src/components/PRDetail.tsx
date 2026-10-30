@@ -24,6 +24,7 @@ interface PrSnapshotResponse {
 }
 import SeverityBadge from "./SeverityBadge";
 import StatusBadge, { FindingStateBadge, FollowupBadge } from "./StatusBadge";
+import CancelReviewButton from "./CancelReviewButton";
 import Button, { LinkButton } from "./ui/Button";
 import Card, { Band, Chip } from "./ui/Card";
 import { Checkbox, Input, Select } from "./ui/Field";
@@ -296,6 +297,7 @@ export default function PRDetail({
             <Icon name={review?.status === "failed" ? "refresh" : "play"} />
             {isRunning ? "Review running…" : review?.status === "failed" ? "Retry Review" : "Start Review"}
           </Button>
+          {isRunning && <CancelReviewButton repo={repo} number={number} onDone={refetchReview} />}
           {review && (
             <span className="whitespace-nowrap font-mono text-xs text-fg-3">
               {review.skills.length > 0 && `${review.skills.join(", ")} · `}

@@ -107,7 +107,7 @@ export function recordStats(runId: string, stats: RunStats) {
     .run(...set.map(([, v]) => v), runId);
 }
 
-export function finishRun(runId: string, status: "reported" | "failed", error?: string) {
+export function finishRun(runId: string, status: "reported" | "failed" | "cancelled", error?: string) {
   getDb()
     .prepare("UPDATE review_runs SET status = ?, error = ?, finished_at = ? WHERE id = ?")
     .run(status, error ?? null, new Date().toISOString(), runId);
