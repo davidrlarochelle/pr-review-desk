@@ -276,6 +276,11 @@ export async function getHeadSha(repo: string, number: number): Promise<string> 
   return parsed.headRefOid;
 }
 
+export async function fetchCheckRollup(repo: string, number: number): Promise<unknown> {
+  const stdout = await runGh(["pr", "view", String(number), "-R", repo, "--json", "statusCheckRollup"]);
+  return (JSON.parse(stdout) as { statusCheckRollup?: unknown }).statusCheckRollup;
+}
+
 export async function postInlineComment(
   repo: string,
   number: number,
