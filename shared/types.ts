@@ -347,6 +347,10 @@ export interface WatchSettings {
   pollSeconds: number;
   /** Repositories where a review request or a push on a reviewed PR starts a review by itself. Empty by default. */
   autoReviewRepos: string[];
+  /** General switch: while true no automatic review starts, and autoReviewRepos is kept as is. */
+  autoReviewPaused: boolean;
+  /** PRs (owner/name#number) never reviewed automatically, whatever is pushed, until removed from the list. */
+  autoReviewMutedPrs: string[];
   /** No automatic review once today's runs (UTC) cost this much, in USD. */
   dailyCapUsd: number;
   autoReviewModel: string | null;

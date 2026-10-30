@@ -8,6 +8,7 @@ import { JUMP_KEY_LABEL, isMac } from "./CommandPalette";
 import { Segmented } from "./ui/Field";
 import { SETTINGS_SHOW_SYSTEM_SWITCH, useSystem, type System, type Theme } from "./SystemProvider";
 import { useNotificationPermission, useUnreadCount } from "../hooks/useNotifications";
+import { AutoReviewSwitch } from "./AutoReviewToggles";
 
 export type Section = "prs" | "local" | "compare" | "activity" | "repos" | "settings";
 export type BuiltSection = "prs" | "local" | "compare" | "activity";
@@ -106,6 +107,7 @@ export default function AppShell({ section, crumbs, actions, children, onNavigat
             <div ref={setActionsEl} className="ml-auto flex shrink-0 items-center gap-2">
               {actions}
             </div>
+            <AutoReviewSwitch />
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
         </div>

@@ -6,12 +6,15 @@ import type { WatchSettings } from "../../../shared/types";
 const KEY = "watch_settings";
 export const MIN_POLL_SECONDS = 30;
 const REPO_NAME = /^[\w.-]+\/[\w.-]+$/;
+const PR_KEY = /^[\w.-]+\/[\w.-]+#\d+$/;
 
 export function defaultWatchSettings(): WatchSettings {
   const fromEnv = Number(process.env.GITHUB_POLL_SECONDS);
   return {
     pollSeconds: Number.isFinite(fromEnv) && fromEnv >= MIN_POLL_SECONDS ? fromEnv : 120,
     autoReviewRepos: [],
+    autoReviewPaused: false,
+    autoReviewMutedPrs: [],
     dailyCapUsd: 5,
     autoReviewModel: "sonnet",
     autoReviewEffort: "standard",
@@ -31,7 +34,12 @@ export function saveWatchSettings(db: Database.Database, patch: Partial<WatchSet
   if (!Array.isArray(next.autoReviewRepos) || !next.autoReviewRepos.every((r) => typeof r === "string" && REPO_NAME.test(r))) {
     throw new Error("autoReviewRepos must be a list of owner/name");
   }
+  if (!Array.isArray(next.autoReviewMutedPrs) || !next.autoReviewMutedPrs.every((p) => typeof p === "string" && PR_KEY.test(p))) {
+    throw new Error("autoReviewMutedPrs must be a list of owner/name#number");
+  }
+  next.autoReviewPaused = next.autoReviewPaused === true;
   next.autoReviewRepos = [...new Set(next.autoReviewRepos)];
+  next.autoReviewMutedPrs = [...new Set(next.autoReviewMutedPrs)];
   db.prepare("INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT (key) DO UPDATE SET value = excluded.value").run(KEY, JSON.stringify(next));
   return next;
 }

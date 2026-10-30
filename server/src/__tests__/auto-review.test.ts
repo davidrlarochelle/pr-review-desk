@@ -51,6 +51,22 @@ describe("auto-review setting", () => {
     expect(autoReviewDecision(pushed, on, 0, true).action).toBe("ignore");
   });
 
+  it("starts nothing while the general switch is off, without forgetting the repositories", () => {
+    expect(defaultWatchSettings().autoReviewPaused).toBe(false);
+    const paused = { ...on, autoReviewPaused: true };
+    expect(autoReviewDecision(pushed, paused, 0, false)).toEqual({ action: "ignore", reason: "auto-review is paused" });
+    expect(autoReviewDecision(requested, paused, 0, false).action).toBe("ignore");
+    expect(paused.autoReviewRepos).toEqual(["a/b"]);
+  });
+
+  it("skips a PR marked not to review, on every new push, until it is unmarked", () => {
+    const muted = { ...on, autoReviewMutedPrs: ["a/b#1"] };
+    expect(autoReviewDecision(pushed, muted, 0, false)).toEqual({ action: "ignore", reason: "auto-review is off for this PR" });
+    expect(autoReviewDecision({ ...pushed, head: "ccc", reviewedHead: "bbb" }, muted, 0, false).action).toBe("ignore");
+    expect(autoReviewDecision(requested, muted, 0, false)).toEqual({ action: "start" });
+    expect(autoReviewDecision(pushed, { ...muted, autoReviewMutedPrs: [] }, 0, false)).toEqual({ action: "start" });
+  });
+
   it("saves to the settings table and refuses unusable values", () => {
     const db = openDb();
     saveWatchSettings(db, { autoReviewRepos: ["a/b", "a/b"], dailyCapUsd: 2 });
@@ -58,5 +74,8 @@ describe("auto-review setting", () => {
     expect(() => saveWatchSettings(db, { pollSeconds: 5 })).toThrow();
     expect(() => saveWatchSettings(db, { dailyCapUsd: -1 })).toThrow();
     expect(() => saveWatchSettings(db, { autoReviewRepos: ["not a repo"] })).toThrow();
+    saveWatchSettings(db, { autoReviewPaused: true, autoReviewMutedPrs: ["a/b#3", "a/b#3"] });
+    expect(getWatchSettings(db)).toMatchObject({ autoReviewPaused: true, autoReviewMutedPrs: ["a/b#3"] });
+    expect(() => saveWatchSettings(db, { autoReviewMutedPrs: ["a/b"] })).toThrow();
   });
 });

@@ -25,6 +25,8 @@ export type AutoReviewDecision = { action: "ignore"; reason: string } | { action
 export function autoReviewDecision(event: WatchEvent, settings: WatchSettings, spentUsd: number, reviewRunning: boolean): AutoReviewDecision {
   if (event.kind !== "review-requested" && event.kind !== "new-commits") return { action: "ignore", reason: "not a review trigger" };
   if (!settings.autoReviewRepos.includes(event.repo)) return { action: "ignore", reason: "auto-review is off for this repository" };
+  if (settings.autoReviewPaused) return { action: "ignore", reason: "auto-review is paused" };
+  if (settings.autoReviewMutedPrs.includes(`${event.repo}#${event.number}`)) return { action: "ignore", reason: "auto-review is off for this PR" };
   if (reviewRunning) return { action: "ignore", reason: "a review of this PR is already running" };
   if (spentUsd >= settings.dailyCapUsd) return { action: "over-cap", spentUsd };
   return { action: "start" };
