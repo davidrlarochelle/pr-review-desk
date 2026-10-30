@@ -67,6 +67,7 @@ The review compares **commits**: `base...branch` in that checkout. Work that is 
 | `REPOS_ROOT` | no | `~/Documents` | Folder with your local checkouts |
 | `SCAN_DIR` | no | none | Folder of checkouts, relative to `REPOS_ROOT`, scanned for repos |
 | `LOCAL_REPOS` | no | none | Extra local checkouts, `label=relative/path,…` |
+| `DEADPOOL_REVIEWS_DIR` | no | `~/.cerebro/revues` | Deadpool's verdict files; their findings show up on the local review of each branch |
 | `HOST_PORT` | no | `37703` | Port the app is served on |
 | `PORT` | no | `3100` | Port of the server in dev mode |
 | `TYPESAFE_API_KEY` | no | none | Turns on Jev: each new finding is judged (nit, severity, does it hold) and Activity compares the answers with what you posted or dismissed. **The text of every finding is sent to TypeSafe** |
@@ -77,6 +78,7 @@ The review compares **commits**: `base...branch` in that checkout. Work that is 
 - **Pull requests**: pick a repository (or all repositories of the org), filter by author, status or label, open a PR, choose a model and an effort level, then **Start review**. Findings arrive sorted by severity.
 - **Findings**: each one shows the background, the problem and a suggested fix, next to the diff. Edit the suggested comment, then post it inline or as a PR comment, or dismiss it.
 - **Local branches**: pick a checkout, a branch and a base, then review. You get a **Copy fix prompt** to hand the findings to your coding agent.
+- **Deadpool**: when the folder `DEADPOOL_REVIEWS_DIR` exists, every verdict file Deadpool writes there (`<ticket>/<date>-<dev>-tour<n>-<verdict>.md`) is read every 30 seconds. Its findings join the local review of the reviewed branch, in the repo whose history holds the reviewed commit, marked **Deadpool**, and you treat them like any other finding. A later round marks the open findings of the earlier ones resolved, since Deadpool lists again every finding that still holds. The files are only read; a verdict whose commit is in none of your local repos is left out, and the server log says so.
 - **Sessions**: the **Session** button on a review shows the latest run of the agent: model, turns, duration, tokens, cost, the full prompt and every event it streamed. Earlier runs are one click away.
 - **Every screen has its own URL**. Refresh, Back and Forward work, and each list remembers your last repository and that repository's filters.
 - **Look**: switch between two design systems (Brutal, Blueprint), in light or dark, at the bottom of the left rail.
